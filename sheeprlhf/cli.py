@@ -1,6 +1,6 @@
-""" Adapted from
-https://github.com/Eclectic-Sheep/sheeprl/blob/4d6e28812de97d54e64ca57e44fb6cb3d6b6c137/sheeprl/cli.py
-"""
+"""Adapted from
+https://github.com/Eclectic-Sheep/sheeprl/blob/4d6e28812de97d54e64ca57e44fb6cb3d6b6c137/sheeprl/cli.py.
+"""  # noqa: D205
 import importlib
 import sys
 from typing import Any, Dict, Optional, Tuple
@@ -16,7 +16,11 @@ from sheeprlhf.utils.registry import register_structured_configs, task_registry
 from sheeprlhf.utils.structure import dotdict
 
 
-def validate_args(args):
+def validate_args(args: Tuple[str, ...]):
+    """Check if the given arguments are valid.
+
+    They should be in the form of: `python -m sheeprlhf <run_type> <other-configs>`.
+    """
     possible_args = list(TASK_TYPE.__dict__.values())
     if len(args) < 2:
         raise Exception(f"Please specify a run type. Possible run arguments: {possible_args}")
@@ -30,6 +34,10 @@ def validate_args(args):
 
 
 def validate_task(cfg: Dict[str, Any]) -> Tuple[str, Optional[str], Optional[str]]:
+    """Validate the task name and entrypoint.
+
+    It check if the given task name is registered in the task registry.
+    """
     module: Optional[str] = None
     entrypoint: Optional[str] = None
     task_name: Optional[str] = cfg.task.config_name
@@ -50,6 +58,7 @@ def validate_task(cfg: Dict[str, Any]) -> Tuple[str, Optional[str], Optional[str
 
 
 def execute(task_name: str, entrypoint: str, module: str, cfg: Dict[str, Any]):
+    """Execute the given task."""
     task = importlib.import_module(f"{module}.{task_name}")
     command = task.__dict__[entrypoint]
     strategy = cfg.fabric.pop("strategy", "auto")
@@ -58,6 +67,7 @@ def execute(task_name: str, entrypoint: str, module: str, cfg: Dict[str, Any]):
 
 
 def run():
+    """Run everything with hydra."""
     task_type = validate_args(sys.argv)
     register_structured_configs()
 

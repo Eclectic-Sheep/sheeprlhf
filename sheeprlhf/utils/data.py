@@ -15,12 +15,13 @@ from sheeprlhf.utils.hydra import instantiate_from_config
 
 
 def prepare_tokenizer(tokenizer_name: str) -> PreTrainedTokenizer:
+    """Creates tokenizer from Huggingface transformers library."""
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
     special_tokens = tokenizer.special_tokens_map
     if not hasattr(tokenizer, "pad_token") or tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    if "bos_token" not in special_tokens.keys():
+    if "bos_token" not in special_tokens:
         # we don't resize the tokenizer here because we want to keep the original vocab size
         # However, we need something to represent the start of the text
         # we use <|startoftext|> from gptj
@@ -33,6 +34,10 @@ def prepare_tokenizer(tokenizer_name: str) -> PreTrainedTokenizer:
 def prepare_generation_config(
     tokenizer: PreTrainedTokenizer, model_cfg: ModelConfig, gen_cfg: GenConfig, fabric: lightning.Fabric
 ) -> Dict[str, Any]:
+    """Creates generation config for Hugginface models.
+
+    In this function, we try to solve token problems for different models.
+    """
     gen_cfg_dict = asdict(gen_cfg)
     try:
         generation_config = GenerationConfig.from_pretrained(model_cfg.repo_name, **gen_cfg_dict)
@@ -47,6 +52,11 @@ def prepare_generation_config(
 
 
 def validate_dataset(fabric: lightning.Fabric, data_cfg: DataConfig) -> DataProcessor:
+    """Dataset validator.
+
+    Validates the dataset for checking if it is required to re-create
+    all preprocessing steps using tokenizers.
+    """
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "true")
     data_processor: DataProcessor = instantiate_from_config(data_cfg)
     full_path = data_processor.full_path

@@ -7,17 +7,23 @@ from omegaconf import II, MISSING
 
 # Omegaconf does not support Literal String types
 class FINETUNE_MODE(Enum):
+    """Finetuning mode for models."""
+
     ALL = "ALL"
     LORA = "LORA"
 
 
 @dataclass
 class LibraryConfig:
+    """A generic configuration for model loading libraries."""
+
     model_name: str = MISSING
 
 
 @dataclass
 class HuggingFaceConfig(LibraryConfig):
+    """Extension configuration for Huggingface based models."""
+
     model_name: str = II("model.repo_name")
     trust_remote_code: bool = False
     load_in_8bit: bool = False
@@ -27,6 +33,8 @@ class HuggingFaceConfig(LibraryConfig):
 
 @dataclass
 class LORAConfig:
+    """Configurations for LORA finetuning."""
+
     targets: str = MISSING
     rank: int = 16
     alpha: float = 16
@@ -35,6 +43,8 @@ class LORAConfig:
 
 @dataclass
 class ModelConfig:
+    """A generic configuration for models."""
+
     config_name: str = MISSING
     repo_name: Optional[str] = None
     embedding_dim_name: Optional[str] = None
@@ -55,6 +65,8 @@ class ModelConfig:
 
 @dataclass
 class OPTConfig(ModelConfig):
+    """Configurations for OPT based models."""
+
     config_name: str = "opt"
     repo_name: str = "facebook/opt-350m"
     embedding_dim_name: Optional[str] = "word_embed_proj_dim"
@@ -63,6 +75,8 @@ class OPTConfig(ModelConfig):
 
 @dataclass
 class GPT2Config(ModelConfig):
+    """Configurations for GPT2 based models."""
+
     config_name: str = "gpt2"
     repo_name: str = "gpt2-medium"
     embedding_dim_name: Optional[str] = "n_embd"
@@ -71,6 +85,8 @@ class GPT2Config(ModelConfig):
 
 @dataclass
 class PhiConfig(ModelConfig):
+    """Configurations for Phi based models."""
+
     config_name: str = "phi"
     repo_name: str = "microsoft/phi-1_5"
     library_cfg: HuggingFaceConfig = HuggingFaceConfig(trust_remote_code=True)
@@ -82,6 +98,8 @@ class PhiConfig(ModelConfig):
 
 @dataclass
 class FalconConfig(ModelConfig):
+    """Configurations for Falcon based models."""
+
     config_name: str = "falcon"
     repo_name: str = "tiiuae/falcon-7b"
     library_cfg: HuggingFaceConfig = HuggingFaceConfig(trust_remote_code=True)

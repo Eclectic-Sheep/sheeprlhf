@@ -7,6 +7,8 @@ from torchmetrics.wrappers import Running
 
 
 class LastValueMetric(Metric):
+    """Metric class that holds only the last value."""
+
     last_value: torch.Tensor
 
     def __init__(self):
@@ -14,11 +16,17 @@ class LastValueMetric(Metric):
         self.add_state("last_value", default=torch.tensor(torch.nan), dist_reduce_fx="mean")
 
     def update(self, value: Union[torch.Tensor, float]):
+        """Updates the metric with a new value.
+
+        Args:
+            value: The new value to update the metric with.
+        """
         if not isinstance(value, torch.Tensor):
             value = torch.as_tensor(value, dtype=torch.float32, device=self.device)
         self.last_value = value
 
     def compute(self):
+        """Computes the metric value based on the last recorded value."""
         return self.last_value
 
     def __str__(self) -> str:
@@ -26,6 +34,8 @@ class LastValueMetric(Metric):
 
 
 class StatsMetric(Metric):
+    """Statistics Metrics for mean, std, min and max values of tensor."""
+
     mean: torch.Tensor
     std: torch.Tensor
     min: torch.Tensor
@@ -38,17 +48,19 @@ class StatsMetric(Metric):
         self.add_state("min", default=torch.tensor(torch.nan), dist_reduce_fx="mean")
         self.add_state("max", default=torch.tensor(torch.nan), dist_reduce_fx="mean")
 
-    def update(self, value: torch.Tensor):
+    def update(self, value: torch.Tensor):  # noqa: D102
         self.mean = value.mean()
         self.std = value.std()
         self.min = value.min()
         self.max = value.max()
 
-    def compute(self):
+    def compute(self):  # noqa: D102
         return {"mean": self.mean, "std": self.std, "min": self.min, "max": self.max}
 
 
 class MetricManager:
+    """This class manages and registers torchmetrics to training."""
+
     def __init__(self, log_interval: int):
         self.log_interval = log_interval
         for metric_name, type_val in self.__annotations__.items():
@@ -61,7 +73,7 @@ class MetricManager:
                     f"Expected type of {metric_name} instance of `torchmetrics.wrappers.Running`, but got {type_val}"
                 )
 
-    def to(self, device):
+    def to(self, device):  # noqa: D102
         for metric_name, _ in self.__annotations__.items():
             metric = getattr(self, metric_name)
             metric.to(device)
@@ -76,6 +88,14 @@ class MetricManager:
         return "\n".join(out)
 
     def format_metric_name(self, metric_name: str):
+        """Formats a metric name by splitting it into context and name parts.
+
+        Args:
+            metric_name: The name of the metric to format.
+
+        Returns:
+            The formatted metric name.
+        """
         words = metric_name.split("_")
         if len(words) == 1:
             return f"info/{metric_name}"
@@ -84,6 +104,14 @@ class MetricManager:
         return f"{context}/{name}"
 
     def compute_all(self, exclude: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Computes all metrics that have been updated and returns them as a dictionary.
+
+        Args:
+            exclude: A list of metric names to exclude from the computation.
+
+        Returns:
+            A dictionary containing the computed metrics.
+        """
         metrics = {}
         for metric_name, _ in self.__annotations__.items():
             formatted_metric_name = self.format_metric_name(metric_name)
@@ -104,7 +132,7 @@ class MetricManager:
                 raise ValueError(f"Invalid type for {metric_name}: {type(computed_value)}")
         return metrics
 
-    def log_all(self, fabric: L.Fabric, step: int, metrics_dict: Dict[str, Any], exclude: Optional[List[str]] = None):
+    def log_all(self, fabric: L.Fabric, step: int, metrics_dict: Dict[str, Any], exclude: Optional[List[str]] = None):  # noqa: D102
         for formatted_metric_name, metric_value in metrics_dict.items():
             if exclude is not None and formatted_metric_name in exclude:
                 continue
@@ -113,6 +141,15 @@ class MetricManager:
 
 @torch.inference_mode()
 def reward_accuracy(chosen_rewards: torch.Tensor, rejected_rewards: torch.Tensor):
+    """Calculates the accuracy of the chosen rewards over the rejected rewards.
+
+    Args:
+        chosen_rewards: A tensor of rewards that were chosen.
+        rejected_rewards: A tensor of rewards that were rejected.
+
+    Returns:
+        The accuracy of the chosen rewards over the rejected rewards.
+    """
     tp = torch.count_nonzero(chosen_rewards > rejected_rewards)
     total = chosen_rewards.shape[0]
     acc = tp / total
@@ -123,7 +160,7 @@ def reward_accuracy(chosen_rewards: torch.Tensor, rejected_rewards: torch.Tensor
 # in this way, we will have less noisy data in the logs
 
 
-class SFTMetricManager(MetricManager):
+class SFTMetricManager(MetricManager):  # noqa: D101
     train_loss: LastValueMetric
     val_loss: LastValueMetric
     info_grad_norm: LastValueMetric
@@ -133,7 +170,7 @@ class SFTMetricManager(MetricManager):
     info_time: LastValueMetric
 
 
-class RMMetricManager(MetricManager):
+class RMMetricManager(MetricManager):  # noqa: D101
     train_loss: LastValueMetric
     train_acc: LastValueMetric
     val_loss: LastValueMetric
@@ -146,7 +183,7 @@ class RMMetricManager(MetricManager):
     info_grad_norm: LastValueMetric
 
 
-class DPOMetricManager(MetricManager):
+class DPOMetricManager(MetricManager):  # noqa: D101
     train_loss: LastValueMetric
     train_acc: LastValueMetric
     val_loss: LastValueMetric
@@ -159,7 +196,7 @@ class DPOMetricManager(MetricManager):
     info_grad_norm: LastValueMetric
 
 
-class PPOMetricManager(MetricManager):
+class PPOMetricManager(MetricManager):  # noqa: D101
     train_actor_loss: LastValueMetric
     train_critic_loss: LastValueMetric
     train_reward_mean: LastValueMetric

@@ -11,6 +11,7 @@ def policy_loss(
     clip_coeff: float,
     action_mask: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
+    """Compute the policy loss for PPO."""
     log_ratio = (log_probs - old_log_probs) * action_mask
     ratio = torch.exp(log_ratio)
     policy_loss_1 = -advantages * ratio
@@ -30,6 +31,7 @@ def value_loss(
     clip_coeff: float,
     action_mask: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
+    """Compute the value loss for PPO."""
     values_clipped = torch.clamp(values, old_values - clip_coeff, old_values + clip_coeff)
     value_loss1 = F.mse_loss(values, returns, reduction="none")
     value_loss2 = F.mse_loss(values_clipped, returns, reduction="none")

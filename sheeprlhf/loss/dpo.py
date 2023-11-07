@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 def compute_masked_logprobs(
     logprobs: torch.Tensor, targets: torch.Tensor, ignore_index: int, average: bool = False
 ) -> torch.Tensor:
+    """Retrieve log probabilities for targets, ignoring padding."""
     targets = targets[:, 1:].clone()
     loss_mask = targets != ignore_index
     if average:
@@ -25,7 +26,7 @@ def dpo_loss(
     ignore_index: int,
     reference_free: bool = False,
 ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
-    """Adapted from https://github.com/eric-mitchell/direct-preference-optimization/blob/main/trainers.py#L45C1-L50C110"""
+    """Adapted from https://github.com/eric-mitchell/direct-preference-optimization/blob/main/trainers.py#L45C1-L50C110."""
     chosen_input_ids = batch["chosen_input_ids"]
     chosen_attention_mask = batch["chosen_attention_mask"]
     chosen_targets = batch["chosen_targets"]

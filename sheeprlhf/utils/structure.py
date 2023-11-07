@@ -1,7 +1,5 @@
 class dotdict(dict):
-    """
-    A dictionary supporting dot notation.
-    """
+    """A dictionary supporting dot notation."""
 
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__

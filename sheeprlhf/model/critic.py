@@ -11,6 +11,8 @@ from sheeprlhf.utils.model import load_hf_transformer
 
 
 class CriticModel(FinetuneModel):
+    """Critic model for PPO training."""
+
     def __init__(self, model_cfg: ModelConfig):
         super().__init__()
         self.model_cfg = model_cfg
@@ -52,18 +54,20 @@ class CriticModel(FinetuneModel):
         self.head.apply(self.init_normal)
 
     def setup_finetuning(self, fabric: lightning.Fabric):
+        """Finetuning setup for critic model is different from actor model."""
         super().setup_finetuning(fabric)
         if self.model_cfg.finetune_mode == FINETUNE_MODE.LORA:
             for param in self.head.parameters():
                 param.requires_grad = True
 
-    def init_normal(self, module):
+    def init_normal(self, module: torch.nn.Module):
+        """Weight initialization for critic head model."""
         if type(module) == torch.nn.Linear:
             module.weight.data.normal_(mean=0.0, std=0.01)
             if module.bias is not None:
                 module.bias.data.zero_()
 
-    def forward(self, **kwargs):
+    def forward(self, **kwargs):  # noqa: D102
         if self.training and not self.model_cfg.use_attention_mask:
             kwargs.pop("attention_mask")
         out = self.transformer(**kwargs)[0]
@@ -71,6 +75,7 @@ class CriticModel(FinetuneModel):
         return value.squeeze(-1)
 
     def get_head_state_dict(self):
+        """Get state dict of critic head model."""
         sd = self.state_dict()
         sd = {k: v for k, v in sd.items() if "head" in k}
         return sd
@@ -83,6 +88,7 @@ class CriticModel(FinetuneModel):
         model_cfg: ModelConfig,
         freeze: bool = False,
     ):
+        """Load checkpoint for critic model."""
         sd = torch.load(path, map_location=fabric.device)
         new_sd = {}
         for k, v in sd.items():
@@ -101,6 +107,10 @@ class CriticModel(FinetuneModel):
 
     @rank_zero_only
     def save_checkpoint(self, fabric: lightning.Fabric, experiment_dir: str, model_cfg: ModelConfig, step):
+        """Checkpoint saving for critic model.
+
+        This includes saving the critic head model as well.
+        """
         output_file = os.path.join(experiment_dir, "model", f"checkpoint-{step}.pt")
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         if model_cfg.finetune_mode == FINETUNE_MODE.LORA:
@@ -110,29 +120,3 @@ class CriticModel(FinetuneModel):
         else:
             sd = self.state_dict()
         fabric.save(output_file, sd)
-
-
-class RewardModel(CriticModel):
-    def __init__(self, model_cfg: ModelConfig):
-        super().__init__(model_cfg)
-        self.gain = torch.nn.Parameter(torch.tensor(1.0), requires_grad=True)
-        self.bias = torch.nn.Parameter(torch.tensor(0.0), requires_grad=True)
-        self._disable_bias_gain = False
-
-    def disable_bias_gain(self):
-        self._disable_bias_gain = True
-
-    def enable_bias_gain(self):
-        self._disable_bias_gain = False
-
-    def forward(self, **kwargs):
-        value_out = super().forward(**kwargs)
-        if self._disable_bias_gain:
-            return value_out
-        return value_out * self.gain + self.bias
-
-    def get_head_state_dict(self):
-        head_state_dict = super().get_head_state_dict()
-        if not self._disable_bias_gain:
-            head_state_dict.update({"gain": self.gain, "bias": self.bias})
-        return head_state_dict

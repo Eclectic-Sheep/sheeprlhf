@@ -8,16 +8,18 @@ from sheeprlhf.utils.model import load_hf_transformer
 
 
 class CasualModel(FinetuneModel):
+    """Casual model for SFT training and casual generation."""
+
     def __init__(self, model_cfg: ModelConfig):
         super().__init__(model_cfg=model_cfg)
         self.model = load_hf_transformer(self.model_cfg)
 
-    def forward(self, **kwargs):
+    def forward(self, **kwargs):  # noqa: D102
         if self.training and not self.model_cfg.use_attention_mask:
             kwargs.pop("attention_mask")
         return self.model(**kwargs).logits
 
-    def generate(self, **kwargs):
+    def generate(self, **kwargs):  # noqa: D102
         return self.model.generate(**kwargs)
 
     def load_checkpoint(
@@ -27,6 +29,7 @@ class CasualModel(FinetuneModel):
         model_cfg: ModelConfig,
         freeze: bool = False,
     ):
+        """Loads a checkpoint from given path."""
         sd = torch.load(path, map_location=fabric.device)
         if model_cfg.finetune_mode == FINETUNE_MODE.LORA:
             add_lora(self.model, lora_cfg=model_cfg.lora_cfg)

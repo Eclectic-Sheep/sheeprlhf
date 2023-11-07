@@ -9,8 +9,12 @@ from sheeprlhf.structure.model import HuggingFaceConfig, ModelConfig
 
 def load_hf_transformer(model_cfg: ModelConfig) -> PreTrainedModel:
     """Load a HuggingFace transformer model.
+
+    The function can also freeze the model at the end of function.
+
     Args:
         model_cfg: ModelConfig object.
+
     Returns:
         A HuggingFace transformer model.
     """
@@ -34,7 +38,15 @@ def load_hf_transformer(model_cfg: ModelConfig) -> PreTrainedModel:
     return model
 
 
-def get_last_checkpoint_path(experiment_dir: str):
+def get_last_checkpoint_path(experiment_dir: str) -> str:
+    """It retrived the last checkpoint based on model name.
+
+    Args:
+        experiment_dir: Output of the trained experiment path.
+
+    Returns:
+        checkpoint path
+    """
     model_dir = os.path.join(experiment_dir, "model")
     checkpoints = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith(".pt")]
     checkpoints = sorted(checkpoints, key=lambda x: int(x.split(".")[-2].split("-")[-1]))
@@ -42,7 +54,7 @@ def get_last_checkpoint_path(experiment_dir: str):
 
 
 def prepare_optimizer_parameters(model: torch.nn.Module, weight_decay: float) -> List[Dict[str, Any]]:
-    """Taken from  https://github.com/karpathy/nanoGPT"""
+    """Taken from  https://github.com/karpathy/nanoGPT."""
     param_dict = {pn: p for pn, p in model.named_parameters()}
     # filter out those that do not require grad
     param_dict = {pn: p for pn, p in param_dict.items() if p.requires_grad}
@@ -60,7 +72,7 @@ def prepare_optimizer_parameters(model: torch.nn.Module, weight_decay: float) ->
     return optim_groups, num_decay_params, num_nodecay_params
 
 
-def compute_grad_norm(model: torch.nn.Module) -> float:
+def compute_grad_norm(model: torch.nn.Module) -> float:  # noqa: D103
     total_norm = 0
     parameters = [p for p in model.parameters() if p.grad is not None and p.requires_grad]
     for p in parameters:

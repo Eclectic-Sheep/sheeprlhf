@@ -4,24 +4,26 @@ from sheeprlhf.data.base import DataProcessor
 
 
 class SummarizationData(DataProcessor):
+    """Data processor for OpenAI Reddit post summarization tasks."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_prompt(self, sample: Dict[str, Any]) -> str:
+    def get_prompt(self, sample: Dict[str, Any]) -> str:  # noqa: D102
         return sample["prompt"] + "\nTL;DR: "
 
-    def get_chosen(self, sample: Dict[str, Any]) -> str:
+    def get_chosen(self, sample: Dict[str, Any]) -> str:  # noqa: D102
         return sample["chosen"][8:]  # remove "TL;DR: "
 
-    def get_rejected(self, sample: Dict[str, Any]) -> str:
+    def get_rejected(self, sample: Dict[str, Any]) -> str:  # noqa: D102
         return sample["rejected"][8:]  # remove "TL;DR: "
 
-    def wrap_prompt(self, prompt: str, **kwargs) -> str:
+    def wrap_prompt(self, prompt: str, **kwargs) -> str:  # noqa: D102
         subreddit = kwargs["subreddit"] if "subreddit" in kwargs else "TechSupport"
         title = kwargs["title"] if "title" in kwargs else "How to fix my laptop?"
         return f"SUBREDDIT: r/{subreddit}\nTITLE: {title}\nPOST: {prompt}\nTL;DR: "
 
-    def get_example_prompt(self) -> str:
+    def get_example_prompt(self) -> str:  # noqa: D102
         prompt = "Hello everyone, I've been having some trouble with my laptop and I was hoping someone could "
         "help me out. I've had this laptop for about 2 years. Recently, it has been running really slow "
         "and it takes forever to load anything. I've tried running virus scans and deleting unnecessary files, "

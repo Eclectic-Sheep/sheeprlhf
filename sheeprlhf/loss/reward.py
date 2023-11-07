@@ -13,8 +13,16 @@ def reward_loss_last_token(
     rejected_rewards: torch.Tensor,
     pad_token_id: int,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """This loss computes the logsigmoid of the difference between the chosen and
-    rejected rewards from last generated non-terminal token"""
+    """Last token based reward loss computation.
+
+    This loss computes the logsigmoid of the difference between the chosen and
+    rejected rewards from last generated non-terminal token.
+
+    Returns:
+        loss: the mean loss for the batch
+        chosen_last_rewards: the last reward for the chosen sequence for each example in the batch
+        rejected_last_rewards: the last reward for the rejected sequence for each example in the batch
+    """
     mask_chosen = chosen != pad_token_id
     mask_rejected = rejected != pad_token_id
 
@@ -36,8 +44,15 @@ def reward_loss_average(
     rejected_rewards: torch.Tensor,
     pad_token_id: int,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """This loss computes the logsigmoid of the difference between the chosen and
-    rejected rewards from average of all output tokens excluding padding tokens
+    """Reward loss computing the average of all tokens.
+
+    This loss computes the logsigmoid of the difference between the chosen and
+    rejected rewards from average of all output tokens excluding padding tokens.
+
+    Returns:
+        loss: the mean loss for the batch
+        chosen_last_rewards: the last reward for the chosen sequence for each example in the batch
+        rejected_last_rewards: the last reward for the rejected sequence for each example in the batch
     """
     mask_chosen = chosen != pad_token_id  # (B, T)
     mask_rejected = rejected != pad_token_id  # (B, T)
@@ -75,7 +90,9 @@ def reward_loss_per_sample(
     rejected_rewards: torch.Tensor,
     pad_token_id: int,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """This loss computes the logsigmoid of the difference between the chosen and rejected rewards
+    """Per token reward loss.
+
+    This loss computes the logsigmoid of the difference between the chosen and rejected rewards
     from every token in the sequence masked by the pad token id. It is adapted from
     https://github.com/microsoft/DeepSpeedExamples/blob/master/applications/DeepSpeed-Chat/training/utils/model/reward_model.py#L37
     for each example in the batch:
@@ -105,10 +122,7 @@ def reward_loss_per_sample(
 
         # Find the index where the action sequence diverge
         divergence_ind = (chosen_actions != rejected_actions).nonzero()
-        if len(divergence_ind) == 0:
-            divergence_ind = sequence_len - 1
-        else:
-            divergence_ind = divergence_ind[0]
+        divergence_ind = divergence_ind[0].item() if len(divergence_ind) > 0 else sequence_len - 1
 
         # Find padding tokens
         pad_mask_chosen = (chosen_actions == pad_token_id).nonzero()
@@ -151,6 +165,7 @@ def reward_loss_per_sample(
 
 
 def load_reward_loss(reward_loss_type: str):
+    """Helper function to select which type of reward loss to use."""
     if reward_loss_type == RM_LOSS_TYPE.AVERAGE:
         return reward_loss_average
     elif reward_loss_type == RM_LOSS_TYPE.LAST_TOKEN:

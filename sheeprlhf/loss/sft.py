@@ -4,6 +4,7 @@ import torch
 def finetune_loss(
     outputs: torch.Tensor, targets: torch.Tensor, ignore_index: int = -100, label_smoothing: float = 0.0
 ) -> torch.Tensor:
+    """Finetuning loss used in SFT algorithm."""
     outputs = outputs[..., :-1, :].contiguous()
     targets = targets[..., 1:].contiguous()
     loss = torch.nn.functional.cross_entropy(

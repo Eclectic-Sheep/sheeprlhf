@@ -5,16 +5,19 @@ from torch.nn.utils.rnn import pad_sequence
 
 
 def list_to_tensor(list_item: List[int], dtype=torch.int64):
+    """Convert a list of integers to a PyTorch tensor."""
     return torch.tensor(list_item, dtype=dtype)
 
 
 class SFTCollate:
+    """Data collator used for SFT Training."""
+
     def __init__(self, dim=1, pad_value=0, ignore_index=-1):
         self.dim = dim
         self.pad_value = pad_value
         self.ignore_index = ignore_index
 
-    def __call__(self, batch):
+    def __call__(self, batch):  # noqa: D102
         input_ids, targets = [], []
         for item in batch:
             prompt_len = item["prompt_len"]
@@ -35,12 +38,18 @@ class SFTCollate:
 
 
 class CompareCollate:
+    """Comparison data collator used for training.
+
+    This collator returns two batches of data, containing chosen and
+    reject output information.
+    """
+
     def __init__(self, dim=1, pad_value=0, ignore_index=-1):
         self.dim = dim
         self.pad_value = pad_value
         self.ignore_index = ignore_index
 
-    def __call__(self, batch):
+    def __call__(self, batch):  # noqa: D102
         chosen_input_ids, chosen_targets = [], []
         rejected_input_ids, rejected_targets = [], []
         for item in batch:
@@ -71,12 +80,17 @@ class CompareCollate:
 
 
 class LeftPadCollate:
+    """Data collator used for training.
+
+    It is used when the data is left padded.
+    """
+
     def __init__(self, dim=1, pad_value=0, ignore_index=-1):
         self.dim = dim
         self.pad_value = pad_value
         self.ignore_index = ignore_index
 
-    def __call__(self, batch):
+    def __call__(self, batch):  # noqa: D102
         input_ids = [list_to_tensor(item["chosen_input_ids"])[: item["prompt_len"]] for item in batch]
         # Use PyTorch's pad_sequence function
         # convert into left padding
@@ -91,12 +105,14 @@ class LeftPadCollate:
 
 
 class EvaluateCollate:
+    """Data collator used for evaluation."""
+
     def __init__(self, dim=1, pad_value=0, ignore_index=-1):
         self.dim = dim
         self.pad_value = pad_value
         self.ignore_index = ignore_index
 
-    def __call__(self, batch):
+    def __call__(self, batch):  # noqa: D102
         input_ids_list = []
         prompt_input_ids_list = []
         targets_list = []

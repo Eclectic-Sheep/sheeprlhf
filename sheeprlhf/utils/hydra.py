@@ -6,6 +6,7 @@ from hydra.utils import instantiate
 
 
 def instantiate_from_config(config: Any, *args, **kwargs):
+    """Wrapper function to instantiate objects from Hydra config."""
     config_copy = deepcopy(config)
     if is_dataclass(config_copy):
         config_copy = asdict(config_copy)

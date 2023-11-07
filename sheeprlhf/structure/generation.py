@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 @dataclass
 class GenConfig:
+    """The default configuration for the generator."""
+
     # We cannot call this GenerationConfig because it will
     # conflict with transformers.GenerationConfig
     config_name: str = "default"

@@ -14,6 +14,8 @@ TextSample = Optional[Tuple[Dict[str, Any], Optional[Dict[str, Any]]]]
 
 
 class TextDataset(torch.utils.data.Dataset):
+    """A simple text dataset for loading data from a pandas dataframe."""
+
     def __init__(self, dataframe_path: str):
         self.dataframe = pd.read_pickle(dataframe_path).reset_index(drop=True)
 
@@ -26,8 +28,7 @@ class TextDataset(torch.utils.data.Dataset):
 
 
 class DataProcessor:
-    """
-    The main class for processing data for the RLHF algorithm.
+    """The main class for processing data for the RLHF algorithm.
 
     Args:
         dataset_name (str): The name of the dataset to load.
@@ -90,8 +91,7 @@ class DataProcessor:
 
     @property
     def tokenizer(self) -> "PreTrainedTokenizer":
-        """
-        The tokenizer property.
+        """The tokenizer property.
 
         Returns:
             PreTrainedTokenizer: The tokenizer.
@@ -100,6 +100,7 @@ class DataProcessor:
 
     @property
     def full_path(self) -> Path:
+        """Returns the full path for data folder."""
         root_dir = Path(self.root_dir)
         processed_tokenizer_name = self.remove_forward_slash(self.tokenizer_name).lower()
         processed_dataset_name = self.remove_forward_slash(self.dataset_name).lower()
@@ -111,6 +112,7 @@ class DataProcessor:
         self._tokenizer = tokenizer
 
     def load_dataframe(self, **kwargs) -> pd.DataFrame:
+        """Loads a dataframe from the huggingface dataset."""
         dataset: HuggingfaceDataset = load_dataset(**kwargs)
         if self.shuffle:
             dataset = dataset.shuffle(seed=self.seed)
@@ -124,21 +126,11 @@ class DataProcessor:
         return dataframe
 
     def remove_forward_slash(self, text: str) -> str:
-        """
-        Removes forward slashes from a string.
-
-        Args:
-            text (str): The string to remove forward slashes from.
-
-        Returns:
-            str: The string with forward slashes removed.
-        """
+        """Removes forward slashes from a string."""
         return text.replace("/", "_")
 
     def process(self):
-        """
-        The main method for processing the data.
-        """
+        """The main method for processing the data."""
         full_path = self.full_path
         os.makedirs(full_path, exist_ok=True)
         cache_dir = full_path.parent / "cache"
@@ -270,22 +262,23 @@ class DataProcessor:
         example_prompt = self.create_example_prompt()
         torch.save(example_prompt, example_prompt_path)
 
-    def get_prompt(self, sample: Dict[str, Any]) -> str:
+    def get_prompt(self, sample: Dict[str, Any]) -> str:  # noqa: D102
         raise NotImplementedError
 
-    def get_chosen(self, sample: Dict[str, Any]) -> List[str]:
+    def get_chosen(self, sample: Dict[str, Any]) -> List[str]:  # noqa: D102
         raise NotImplementedError
 
-    def get_rejected(self, sample: Dict[str, Any]) -> List[str]:
+    def get_rejected(self, sample: Dict[str, Any]) -> List[str]:  # noqa: D102
         raise NotImplementedError
 
-    def get_example_prompt(self) -> str:
+    def get_example_prompt(self) -> str:  # noqa: D102
         raise NotImplementedError
 
-    def wrap_prompt(self, prompt: str) -> str:
+    def wrap_prompt(self, prompt: str) -> str:  # noqa: D102
         raise NotImplementedError
 
     def create_example_prompt(self) -> Dict[str, Any]:
+        """Proccesses and returns an example prompt."""
         prompt = self.get_example_prompt()
         wrapped_prompt = self.wrap_prompt(prompt)
 

@@ -13,25 +13,48 @@ if TYPE_CHECKING:
 
 
 class FixedKLController:
-    "Dummy KL controller that does not update."
+    """Dummy KL controller that does not update."""
 
     def __init__(self, kl_coeff):
         self.value = kl_coeff
 
-    def update(self, current, n_steps):
+    def update(self, current, n_steps):  # noqa: D102
         pass
 
 
 # TODO: Adaptive KL horizon does not clearly understood.
 # How do we assign the horizon?
 class AdaptiveKLController:
+    """A class for controlling the KL divergence between the old and new policy in PPO.
+
+    Parameters:
+        init_kl_coeff : float
+            The initial value for the KL coefficient.
+        target_kl_coeff : float
+            The target value for the KL coefficient.
+        kl_horizon : float
+            The number of steps over which to adjust the KL coefficient.
+        clip_range : float
+            The maximum amount by which to clip the proportional error.
+
+    Attributes:
+        value : float
+            The current value of the KL coefficient.
+    """
+
     def __init__(self, init_kl_coeff: float, target_kl_coeff: float, kl_horizon: float, clip_range: float):
         self.value = init_kl_coeff
         self.target_kl_coeff = target_kl_coeff
         self.kl_horizon = kl_horizon
         self.clip_range = clip_range
 
-    def update(self, current, n_steps):
+    def update(self, current: int, n_steps: int):
+        """Update the value of the PPO object based on the current KL divergence and the number of steps taken.
+
+        Args:
+            current (float): The current KL divergence.
+            n_steps (int): The number of steps taken.
+        """
         target = self.target_kl_coeff
         proportional_error = torch.clamp(current / target - 1, -self.clip_range, self.clip_range)
         mult = 1 + proportional_error * n_steps / self.kl_horizon
@@ -39,7 +62,7 @@ class AdaptiveKLController:
 
 
 @torch.no_grad()
-def estimate_kl_divergence(actor_log_probs: torch.Tensor, ref_log_probs: torch.Tensor):
+def estimate_kl_divergence(actor_log_probs: torch.Tensor, ref_log_probs: torch.Tensor):  # noqa: D103
     # http://joschu.net/blog/kl-approx.html
     ratio = actor_log_probs - ref_log_probs  # (B, T)
     estimated_kl = (torch.exp(ratio) - 1) - ratio
@@ -47,7 +70,7 @@ def estimate_kl_divergence(actor_log_probs: torch.Tensor, ref_log_probs: torch.T
 
 
 @torch.no_grad()
-def compute_advantages_and_returns(
+def compute_advantages_and_returns(  # noqa: D103
     rewards: torch.Tensor, values: torch.Tensor, start: int = 0, gamma: float = 0.99, lambd: float = 0.95
 ):
     # Adopted from https://github.com/microsoft/DeepSpeedExamples/blob/master/applications/DeepSpeed-Chat/training/step3_rlhf_finetuning/ppo_trainer.py
@@ -66,7 +89,7 @@ def compute_advantages_and_returns(
 
 # These functions for mask computations are taken from TRL. They mask out not played tokens
 # such as padding tokens.
-def normalize(values, shift_mean=True):
+def normalize(values, shift_mean=True):  # noqa: D103
     mean, var = torch.mean(values), torch.var(values, unbiased=False)
     whitened = (values - mean) * torch.rsqrt(var + 1e-8)
     if not shift_mean:
@@ -74,7 +97,7 @@ def normalize(values, shift_mean=True):
     return whitened
 
 
-def masked_mean(tensor: torch.Tensor, mask: torch.Tensor, dim: int = 1) -> torch.Tensor:
+def masked_mean(tensor: torch.Tensor, mask: torch.Tensor, dim: int = 1) -> torch.Tensor:  # noqa: D103
     tensor = tensor * mask
     tensor = tensor.sum(dim=dim, keepdim=True)
     mask_sum = mask.sum(dim=dim, keepdim=True)
@@ -82,7 +105,7 @@ def masked_mean(tensor: torch.Tensor, mask: torch.Tensor, dim: int = 1) -> torch
     return mean
 
 
-def masked_normalize(
+def masked_normalize(  # noqa: D103
     tensor: torch.Tensor, mask: torch.Tensor, shift_mean: bool = True, dim: int = 1, eps: float = 1e-8
 ) -> torch.Tensor:
     tensor = tensor * mask
@@ -106,6 +129,21 @@ def collect_rollout(
     fabric: lightning.Fabric,
     metrics: PPOMetricManager,
 ) -> Dict[str, torch.Tensor]:
+    """Collects rollout data for PPO algorithm.
+
+    Args:
+        batch: The batch of data.
+        agent: The PPO agent.
+        kl_controller: The KL controller.
+        generation_config: The generation configuration.
+        algo_cfg: The PPO configuration.
+        tokenizer: The tokenizer.
+        fabric: The fabric.
+        metrics: The metric manager.
+
+    Returns:
+        The rollout data.
+    """
     agent.actor.eval()
     agent.critic.eval()
 

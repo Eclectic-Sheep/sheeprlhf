@@ -1,6 +1,6 @@
-""" Adapted from
+"""Adapted from
 https://github.com/Eclectic-Sheep/sheeprl/blob/4d6e28812de97d54e64ca57e44fb6cb3d6b6c137/sheeprl/utils/registry.py
-"""
+"""  # noqa: D415, D205
 from __future__ import annotations
 
 import importlib
@@ -18,6 +18,7 @@ task_registry: Dict[str, List[Dict[str, Any]]] = {}
 
 
 def _register_task(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Register a task in the task registry."""
     # lookup containing module
     if fn.__module__ == "__main__":
         return fn
@@ -43,6 +44,8 @@ def _register_task(fn: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def register_task():
+    """Task registery decorator."""
+
     def inner_decorator(fn):
         return _register_task(fn)
 
@@ -50,6 +53,13 @@ def register_task():
 
 
 def auto_register_structure(cs: ConfigStore, module_name: str, node_name: str):
+    """Automatically register all dataclasses in a module.
+
+    Args:
+        cs : The main ConfigStore instance.
+        module_name: The name of the module to register.
+        node_name: The name of the node (group) to register.
+    """
     module = importlib.import_module(module_name)
     dataclasses = [obj for name, obj in inspect.getmembers(module) if inspect.isclass(obj) and is_dataclass(obj)]
     for dataclass in dataclasses:
@@ -63,6 +73,7 @@ def auto_register_structure(cs: ConfigStore, module_name: str, node_name: str):
 
 
 def register_structured_configs():
+    """Registers all structured configs in sheeprlhf.structure."""
     cs = ConfigStore.instance()
     for key, val in _STRUCTURED_CONFIG_GROUPS.items():
         auto_register_structure(cs, f"sheeprlhf.structure.{key}", val)

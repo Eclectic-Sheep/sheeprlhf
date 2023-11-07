@@ -7,12 +7,16 @@ from omegaconf import II, MISSING
 
 @dataclass
 class TASK_TYPE:
+    """The type of task to run."""
+
     TRAIN: str = "train"
     EVAL: str = "eval"
 
 
 # Omegaconf does not support Literal String types
 class RM_LOSS_TYPE(Enum):
+    """The type of loss function to use for reward modelling."""
+
     AVERAGE = "average"
     LAST_TOKEN = "last_token"
     PER_SAMPLE = "per_sample"

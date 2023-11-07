@@ -8,8 +8,7 @@ from omegaconf import II, MISSING
 
 @dataclass
 class DataConfig:
-    """
-    The main class for processing data for the RLHF algorithm.
+    """The main class for processing data for the RLHF algorithm.
 
     Args:
         config_name: The name of the data configuration.
@@ -54,6 +53,8 @@ class DataConfig:
 
 @dataclass
 class HelpfulHarmlessConfig(DataConfig):
+    """The configuration for the HelpfulHarmless dataset available in Huggingface."""
+
     _target_: str = "sheeprlhf.data.HelpfulHarmlessData"
     config_name: str = "helpful_harmless"
     dataset_name: str = "Dahoas/full-hh-rlhf"
@@ -61,6 +62,8 @@ class HelpfulHarmlessConfig(DataConfig):
 
 @dataclass
 class SummarizationConfig(DataConfig):
+    """The configuration for the OpenAI Reddit posts summarization dataset available in Huggingface."""
+
     _target_: str = "sheeprlhf.data.SummarizationData"
     config_name: str = "summarization"
     dataset_name: str = "CarperAI/openai_summarize_comparisons"
@@ -73,5 +76,6 @@ class SummarizationConfig(DataConfig):
                 "`remove_same_inputs` is set to True. This means only one example per duplicated "
                 "input will be kept. This may result in a smaller dataset than expected "
                 "because this dataset may contain many negative (rejected) examples from "
-                "the same (chosen) input."
+                "the same (chosen) input.",
+                stacklevel=2,
             )

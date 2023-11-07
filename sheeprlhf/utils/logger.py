@@ -30,6 +30,7 @@ def print_config(
         fields: Determines which main fields from config will
             be printed and in what order.
         resolve: Whether to resolve reference fields of DictConfig.
+        cfg_save_path: Path to save the config tree.
     """
     style = "dim"
     tree = rich.tree.Tree("CONFIG", style=style, guide_style=style)
@@ -50,16 +51,18 @@ def print_config(
 
 @rank_zero_only
 def log_text(fabric: lightning.Fabric, text: str, name: str, step: int):
+    """Wrapper function to log text to tensorboard."""
     if fabric.logger is not None:
         if isinstance(fabric.logger, lightning.fabric.loggers.tensorboard.TensorBoardLogger):
             fabric.logger.experiment.add_text(name, text, step)
         else:
-            warnings.warn(f"Logging text is not supported for {type(fabric.logger)}")
+            warnings.warn(f"Logging text is not supported for {type(fabric.logger)}", stacklevel=2)
 
 
 def trainable_parameter_summary(
     model: torch.nn.Module, show_names: bool = False, fabric: Optional[lightning.Fabric] = None
 ):
+    """Prints a summary of the trainable parameters of a model."""
     print_fn = fabric.print if fabric is not None else print
     trainable = {"int8": 0, "bf16": 0, "fp16": 0, "fp32": 0, "other": 0}
     non_trainable = {"int8": 0, "bf16": 0, "fp16": 0, "fp32": 0, "other": 0}
@@ -101,6 +104,13 @@ def trainable_parameter_summary(
 def create_tensorboard_logger(
     fabric: Fabric, cfg: Dict[str, Any], override_log_level: bool = False
 ) -> Tuple[Optional[TensorBoardLogger]]:
+    """Creates tensorboard logger.
+
+    Set logger only on rank-0 but share the logger directory: since
+    we don't know. what is happening during the `fabric.save()` method,
+    at least we assure that all ranks save under the same named folder.
+    As a plus, rank-0 sets the time uniquely for everyone.
+    """
     # Set logger only on rank-0 but share the logger directory: since we don't know
     # what is happening during the `fabric.save()` method, at least we assure that all
     # ranks save under the same named folder.
@@ -114,14 +124,17 @@ def create_tensorboard_logger(
 
 
 def get_log_dir(fabric: Fabric, root_dir: str, run_name: str, share: bool = True) -> str:
-    """Return and, if necessary, create the log directory. If there are more than one processes,
-    the rank-0 process shares the directory to the others (if the `share` parameter is set to `True`).
+    """Return and, if necessary, create the log directory.
+
+    If there are more than one processes, the rank-0 process shares
+    the directory to the others
+    (if the `share` parameter is set to `True`).
 
     Args:
-        fabric (Fabric): the fabric instance.
-        root_dir (str): the root directory of the experiment.
-        run_name (str): the name of the experiment.
-        share (bool): whether or not to share the `log_dir` among processes.
+        fabric: the fabric instance.
+        root_dir: the root directory of the experiment.
+        run_name: the name of the experiment.
+        share: whether or not to share the `log_dir` among processes.
 
     Returns:
         The log directory of the experiment.
@@ -147,13 +160,10 @@ def get_log_dir(fabric: Fabric, root_dir: str, run_name: str, share: bool = True
                     if _is_dir(fs, d) and bn.startswith("version_"):
                         dir_ver = bn.split("_")[1].replace("/", "")
                         existing_versions.append(int(dir_ver))
-                if len(existing_versions) == 0:
-                    version = 0
-                else:
-                    version = max(existing_versions) + 1
+                version = 0 if len(existing_versions) == 0 else max(existing_versions) + 1
                 log_dir = os.path.join(save_dir, f"version_{version}")
             except OSError:
-                warnings.warn("Missing logger folder: %s", save_dir)
+                warnings.warn("Missing logger folder: %s", save_dir, stacklevel=2)
                 log_dir = os.path.join(save_dir, f"version_{0}")
 
             os.makedirs(log_dir, exist_ok=True)

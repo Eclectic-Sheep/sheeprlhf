@@ -6,11 +6,14 @@ from sheeprlhf.utils.lora import add_lora
 
 
 class FinetuneModel(torch.nn.Module):
+    """Base class for adapting finetuning for different models."""
+
     def __init__(self, model_cfg: ModelConfig) -> None:
         super().__init__()
         self.model_cfg = model_cfg
 
     def setup_finetuning(self, fabric: lightning.Fabric):
+        """Finetuning setup for parameters."""
         finetune_mode = self.model_cfg.finetune_mode
         if finetune_mode == FINETUNE_MODE.ALL:
             fabric.print("Using all layers parameters for finetuning")

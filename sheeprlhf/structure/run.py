@@ -11,7 +11,7 @@ from sheeprlhf.structure.task import TrainTaskConfig
 
 
 @dataclass
-class TrainRunConfig:
+class TrainRunConfig:  # noqa: D101
     config_name: str = "base_train"
     # Mandatory configs
     task: TrainTaskConfig = MISSING

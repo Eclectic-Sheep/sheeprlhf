@@ -2,13 +2,30 @@ import math
 
 
 class CosineSchedulerWithWarmup:
+    """Cosine learning rate scheduler with warmup.
+
+    Args:
+        lr: The initial learning rate.
+        warmup_steps: The number of warmup steps.
+        lr_decay_steps: The number of learning rate decay steps.
+        min_lr: The minimum learning rate.
+    """
+
     def __init__(self, lr: float, warmup_steps: int, lr_decay_steps: int, min_lr: float = 1e-8):
         self.lr = lr
         self.warmup_steps = warmup_steps
         self.lr_decay_steps = lr_decay_steps
         self.min_lr = min_lr
 
-    def get_lr(self, it: int):
+    def get_lr(self, it: int) -> float:
+        """Retrives the learning rate for the given iteration.
+
+        Args:
+            it : The current iteration.
+
+        Returns:
+            Computed learning rate.
+        """
         # 1) linear warmup for warmup_iters steps
         if it < self.warmup_steps:
             return self.lr * it / self.warmup_steps

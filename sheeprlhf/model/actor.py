@@ -9,10 +9,12 @@ if typing.TYPE_CHECKING:
 
 
 class ActorModel(CasualModel):
-    def __init__(self, model, model_cfg: ModelConfig):
-        super().__init__(model=model, model_cfg=model_cfg)
+    """Actor model for PPO and DPO algorithms."""
 
-    def forward(self, **kwargs):
+    def __init__(self, model_cfg: ModelConfig):
+        super().__init__(model_cfg=model_cfg)
+
+    def forward(self, **kwargs):  # noqa: D102
         input_ids = kwargs["input_ids"]
         if self.training and not self.model_cfg.use_attention_mask:
             kwargs.pop("attention_mask")
