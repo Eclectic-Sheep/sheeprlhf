@@ -174,3 +174,12 @@ def get_log_dir(fabric: Fabric, root_dir: str, run_name: str, share: bool = True
         world_collective.broadcast_object_list(data, src=0)
         log_dir = data[0]
     return log_dir
+
+
+@rank_zero_only
+def rank_zero_print(*args, **kwargs):
+    """Wrapper around `print` that only prints from rank 0."""
+    print(*args, **kwargs)
+    if kwargs.get("file") is None:
+        with open("rank_zero_log.txt", "a") as f:
+            print(*args, **kwargs, file=f)

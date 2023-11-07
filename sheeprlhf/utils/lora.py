@@ -304,13 +304,13 @@ def add_lora(model: torch.nn.Module, lora_cfg: LORAConfig):
                 parametrize.register_parametrization(m, attr_name, parametrization(m))
 
 
-def add_multiple_lora(model: torch.nn.Module, device, lora_cfg: LORAConfig, num: int):
+def add_multiple_lora(model: torch.nn.Module, lora_cfg: LORAConfig, num: int):
     """Adds multiple lora to the model."""
     num_added_lora = 0
     if num > 1:
         model.apply(apply_to_lora(_prepare_for_multiple_lora))
     while num_added_lora < num:
         if num_added_lora == 0:
-            add_lora(model=model, device=device, lora_cfg=lora_cfg)
+            add_lora(model=model, lora_cfg=lora_cfg)
         model.apply(apply_to_lora(_append_lora))
         num_added_lora += 1

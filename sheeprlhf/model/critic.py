@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import lightning
 import torch
@@ -53,9 +54,9 @@ class CriticModel(FinetuneModel):
         self.head = torch.nn.Linear(embedding_dim, 1, bias=False)
         self.head.apply(self.init_normal)
 
-    def setup_finetuning(self, fabric: lightning.Fabric):
+    def setup_finetuning(self, model_cfg: Optional[ModelConfig] = None) -> None:
         """Finetuning setup for critic model is different from actor model."""
-        super().setup_finetuning(fabric)
+        super().setup_finetuning(model_cfg=model_cfg)
         if self.model_cfg.finetune_mode == FINETUNE_MODE.LORA:
             for param in self.head.parameters():
                 param.requires_grad = True
