@@ -81,11 +81,13 @@ def generate(  # noqa: D103
 
 @register_task()
 def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
-    task_cfg = DPOConfig(**cfg.algo)
+    task_cfg = DPOConfig(**cfg.task)
     model_cfg = ModelConfig(**cfg.model)
     data_cfg = DataConfig(**cfg.data)
     gen_cfg = GenConfig(**cfg.generation)
     optim_cfg = cfg.optim
+
+    fabric.seed_everything(cfg.seed + fabric.global_rank)
 
     # Create TensorBoardLogger. This will create the logger only on the
     # rank-0 process
@@ -169,6 +171,8 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
 
     data_iterator = iter(train_dataloader)
     agent.reference.eval()
+    fabric.print("Model Checkpoint interval: ", task_cfg.save_interval, "steps")
+    fabric.print("Model Evaluation interval: ", task_cfg.eval_interval, "steps")
     for k in iterator:
         agent.actor.train()
         # Setup counters and data
