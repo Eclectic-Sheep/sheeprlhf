@@ -1,9 +1,12 @@
+import os
+
 import lightning
 import torch
+from lightning_utilities.core.rank_zero import rank_zero_only
 
 from sheeprlhf.model.finetune import FinetuneModel
 from sheeprlhf.structure.model import FINETUNE_MODE, ModelConfig
-from sheeprlhf.utils.lora import add_lora, merge_lora
+from sheeprlhf.utils.lora import add_lora, get_lora_state_dict, merge_lora
 from sheeprlhf.utils.model import load_hf_transformer
 
 
@@ -43,3 +46,14 @@ class CasualModel(FinetuneModel):
             for param in self.model.parameters():
                 param.requires_grad = False
             self.model.eval()
+
+    @rank_zero_only
+    def save_checkpoint(self, fabric: lightning.Fabric, experiment_dir: str, model_cfg: ModelConfig, step):
+        """Checkpoint saving for critic model.
+
+        This includes saving the critic head model as well.
+        """
+        output_file = os.path.join(experiment_dir, "model", f"checkpoint-{step}.pt")
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        sd = get_lora_state_dict(self) if model_cfg.finetune_mode == FINETUNE_MODE.LORA else self.state_dict()
+        fabric.save(output_file, sd)

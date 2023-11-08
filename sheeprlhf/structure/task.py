@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
@@ -55,9 +55,12 @@ class TrainTaskConfig:
     mini_batch_size: int = 8
     micro_batch_size: int = 8
     gradient_clip_val: float = 1.0
-    gradient_accumulation_steps: int = 1
+    gradient_accumulation_steps: int = field(init=False)
     use_masked_targets: bool = False
     lr_warmup_steps: int = 200
+
+    def __post_init__(self):
+        self.gradient_accumulation_steps = self.mini_batch_size // self.micro_batch_size
 
 
 @dataclass

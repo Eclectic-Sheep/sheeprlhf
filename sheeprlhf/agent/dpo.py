@@ -4,6 +4,7 @@ from lightning import Fabric
 
 from sheeprlhf.model.actor import ActorModel
 from sheeprlhf.structure.model import FINETUNE_MODE, ModelConfig
+from sheeprlhf.structure.task import DPOConfig
 from sheeprlhf.utils.logger import trainable_parameter_summary
 from sheeprlhf.utils.lora import add_lora, disable_lora, enable_lora
 from sheeprlhf.utils.model import get_model_checkpoint
@@ -21,15 +22,14 @@ class DPOAgent:
 
     def __init__(
         self,
-        fabric: Fabric,
         model_cfg: ModelConfig,
-        sft_experiment_dir: str,
-        sft_model_name: Optional[str] = None,
+        task_cfg: DPOConfig,
     ) -> None:
         self.model_cfg = model_cfg
-        self.fabric = fabric
         # Currently we only support same architecture for reference and actor models
-        self._sft_model_cfg, self._sft_checkpoint_path = get_model_checkpoint(sft_experiment_dir, sft_model_name)
+        self._sft_model_cfg, self._sft_checkpoint_path = get_model_checkpoint(
+            task_cfg.sft_experiment_dir, task_cfg.sft_model_name
+        )
         self._lora_enabled = model_cfg.finetune_mode == FINETUNE_MODE.LORA
 
         self._reference = ActorModel(model_cfg=self._sft_model_cfg)
@@ -38,14 +38,14 @@ class DPOAgent:
         if not self._lora_enabled:
             self._actor = ActorModel(model_cfg=self._sft_model_cfg)
 
-    def load_checkpoint(self) -> None:
+    def load_checkpoint(self, fabric: Fabric) -> None:
         """Load checkpoint for both actor and reference model."""
         self._reference.load_checkpoint(
-            path=self._sft_checkpoint_path, fabric=self.fabric, model_cfg=self._sft_model_cfg, freeze=True
+            path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
         )
         if not self._lora_enabled:
             self._actor.load_checkpoint(
-                path=self._sft_checkpoint_path, fabric=self.fabric, model_cfg=self._sft_model_cfg, freeze=False
+                path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=False
             )
 
     def setup_finetuning(self, model_cfg: Optional[ModelConfig] = None) -> None:
