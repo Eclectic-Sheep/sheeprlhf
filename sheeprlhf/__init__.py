@@ -1,3 +1,4 @@
+from sheeprlhf.task.train import rm as rm
 from sheeprlhf.task.train import sft as sft
 
 __version__ = "0.1.0"

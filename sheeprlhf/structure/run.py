@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from omegaconf import MISSING, SI
 
@@ -22,11 +23,9 @@ class TrainRunConfig:  # noqa: D101
     fabric: FabricConfig = AutoCudaConfig()
     optim: OptimizerConfig = AdamWConfig()
     generation: GenConfig = GenConfig()
-
+    experiment: Any = None
     debug: bool = False
     seed: int = 42
     torch_deterministic: bool = False
-    # TODO: change the exp name to MISSING
-    exp_name: str = "test_training"
     run_name: str = SI("seed_${seed}")
-    root_dir: str = SI("${task.config_name}/${data.config_name}/${now:%Y-%m-%d_%H-%M-%S}")
+    root_dir: str = SI("${data.config_name}/${model.config_name}/${task.config_name}/${now:%Y-%m-%d_%H-%M-%S}")

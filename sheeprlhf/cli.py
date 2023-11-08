@@ -6,6 +6,7 @@ import sys
 from typing import Any, Dict, Optional, Tuple
 
 import hydra
+from dotenv import load_dotenv
 from lightning import Fabric
 from omegaconf import DictConfig, OmegaConf
 
@@ -70,6 +71,7 @@ def run():
     """Run everything with hydra."""
     task_type = validate_args(sys.argv)
     register_structured_configs()
+    load_dotenv()
 
     @hydra.main(version_base="1.3", config_path="config", config_name=task_type)
     def _run(cfg: DictConfig):

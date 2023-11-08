@@ -1,7 +1,9 @@
 import os
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
+from omegaconf import OmegaConf
 from transformers import AutoConfig, AutoModel, AutoModelForCausalLM, PreTrainedModel
 
 from sheeprlhf.structure.model import HuggingFaceConfig, ModelConfig
@@ -38,19 +40,30 @@ def load_hf_transformer(model_cfg: ModelConfig) -> PreTrainedModel:
     return model
 
 
-def get_last_checkpoint_path(experiment_dir: str) -> str:
-    """It retrived the last checkpoint based on model name.
+def get_model_checkpoint(experiment_dir: str, model_name: Optional[str] = None) -> Tuple[ModelConfig, str]:
+    """It retrives model checkpoint and related model config.
+
+    By default it will return the last checkpoint if model_name is not provided.
 
     Args:
         experiment_dir: Output of the trained experiment path.
+        model_name: Name of the model to retrieve the checkpoint. Example: `model-1000.pt`
 
     Returns:
-        checkpoint path
+        A tuple of ModelConfig and checkpoint path.
     """
     model_dir = os.path.join(experiment_dir, "model")
-    checkpoints = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith(".pt")]
-    checkpoints = sorted(checkpoints, key=lambda x: int(x.split(".")[-2].split("-")[-1]))
-    return checkpoints[-1]
+    exp_cfg = OmegaConf.load(Path(experiment_dir) / ".hydra/config.yaml")
+    model_cfg = ModelConfig(**exp_cfg.model)
+    if model_name is None:
+        checkpoints = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith(".pt")]
+        checkpoints = sorted(checkpoints, key=lambda x: int(x.split(".")[-2].split("-")[-1]))
+        selected_checkpoint = checkpoints[-1]
+    else:
+        selected_checkpoint = os.path.join(model_dir, model_name)
+        if not os.path.exists(selected_checkpoint):
+            raise FileNotFoundError(f"Checkpoint {selected_checkpoint} does not exist.")
+    return model_cfg, selected_checkpoint
 
 
 def prepare_optimizer_parameters(model: torch.nn.Module, weight_decay: float) -> List[Dict[str, Any]]:

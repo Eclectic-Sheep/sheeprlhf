@@ -68,9 +68,7 @@ class LoRAParametrization(nn.Module):
         self.forward_fn = self.lora_forward
 
     @classmethod
-    def from_linear(
-        cls, layer: torch.nn.Linear, device, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0
-    ):
+    def from_linear(cls, layer: torch.nn.Linear, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0):
         """Create Lora Module from linear layer."""
         fan_out, fan_in = layer.weight.shape
         return cls(
@@ -78,9 +76,7 @@ class LoRAParametrization(nn.Module):
         )
 
     @classmethod
-    def from_conv2d(
-        cls, layer: torch.nn.Conv2d, device, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0
-    ):
+    def from_conv2d(cls, layer: torch.nn.Conv2d, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0):
         """Create Lora Module from Conv2D layer."""
         fan_out, fan_in = layer.weight.view(layer.weight.shape[0], -1).shape
         return cls(
@@ -89,7 +85,7 @@ class LoRAParametrization(nn.Module):
 
     @classmethod
     def from_embedding(
-        cls, layer: torch.nn.Embedding, device, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0
+        cls, layer: torch.nn.Embedding, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0
     ):
         """Create Lora Module from Embedding layer."""
         fan_in, fan_out = layer.weight.shape
@@ -98,9 +94,7 @@ class LoRAParametrization(nn.Module):
         )
 
     @classmethod
-    def from_conv1d(
-        cls, layer: torch.nn.Conv1d, device, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0
-    ):
+    def from_conv1d(cls, layer: torch.nn.Conv1d, rank: int = 4, lora_dropout_p: float = 0.0, lora_alpha: float = 1.0):
         """Create Lora Module from Conv1D layer."""
         fan_out, fan_in = layer.weight.view(layer.weight.shape[0], -1).shape
         return cls(

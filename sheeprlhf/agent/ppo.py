@@ -1,8 +1,6 @@
-from pathlib import Path
 from typing import Optional
 
 from lightning import Fabric
-from omegaconf import OmegaConf
 
 from sheeprlhf.model.actor import ActorModel
 from sheeprlhf.model.critic import CriticModel
@@ -10,7 +8,7 @@ from sheeprlhf.model.reward import RewardModel
 from sheeprlhf.structure.model import FINETUNE_MODE, ModelConfig
 from sheeprlhf.utils.logger import trainable_parameter_summary
 from sheeprlhf.utils.lora import add_lora, add_multiple_lora, disable_lora, enable_lora, select_lora
-from sheeprlhf.utils.model import get_last_checkpoint_path
+from sheeprlhf.utils.model import get_model_checkpoint
 
 
 class PPOAgent:
@@ -40,19 +38,17 @@ class PPOAgent:
         init_critic_with_rm: bool,
         sft_experiment_dir: str,
         rm_experiment_dir: str,
+        sft_model_name: Optional[str] = None,
+        rm_model_name: Optional[str] = None,
     ) -> None:
         self.model_cfg = model_cfg
         self.fabric = fabric
         self._init_critic_with_rm = init_critic_with_rm
 
-        sft_exp_cfg = OmegaConf.load(Path(sft_experiment_dir) / ".hydra/config.yaml")
-        self._sft_model_cfg = ModelConfig(**sft_exp_cfg.model)
-        self._sft_checkpoint_path = get_last_checkpoint_path(sft_experiment_dir)
+        self._sft_model_cfg, self._sft_checkpoint_path = get_model_checkpoint(sft_experiment_dir, sft_model_name)
         sft_model_name = self._sft_model_cfg.repo_name
 
-        rm_exp_cfg = OmegaConf.load(Path(rm_experiment_dir) / ".hydra/config.yaml")
-        self._rm_model_cfg = ModelConfig(**rm_exp_cfg.model)
-        self._rm_checkpoint_path = get_last_checkpoint_path(rm_experiment_dir)
+        self._rm_model_cfg, self._rm_checkpoint_path = get_model_checkpoint(rm_experiment_dir, sft_model_name)
         rm_model_name = self._rm_model_cfg.repo_name
 
         self._reference = ActorModel(model_cfg=self._sft_model_cfg)

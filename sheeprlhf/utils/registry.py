@@ -32,7 +32,7 @@ def _register_task(fn: Callable[..., Any]) -> Callable[..., Any]:
     if registered_tasks is None:
         task_registry[module] = [new_registry]
     else:
-        task_registry.append(new_registry)
+        task_registry[module].append(new_registry)
 
     # add the decorated function to __all__ in algorithm
     mod = sys.modules[fn.__module__]

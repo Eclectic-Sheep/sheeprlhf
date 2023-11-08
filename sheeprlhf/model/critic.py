@@ -15,9 +15,8 @@ class CriticModel(FinetuneModel):
     """Critic model for PPO training."""
 
     def __init__(self, model_cfg: ModelConfig):
-        super().__init__()
-        self.model_cfg = model_cfg
-        model = load_hf_transformer(model_cfg)
+        super().__init__(model_cfg=model_cfg)
+        model = load_hf_transformer(self.model_cfg)
         transformer_config = model.base_model.config
         if model_cfg.embedding_dim_name is None:
             if hasattr(model, "get_input_embeddings"):
