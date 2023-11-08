@@ -183,7 +183,7 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
             agent=agent,
             generation_config=generation_config,
             kl_controller=kl_controller,
-            algo_cfg=task_cfg,
+            task_cfg=task_cfg,
             tokenizer=tokenizer,
             fabric=fabric,
             metrics=metrics,

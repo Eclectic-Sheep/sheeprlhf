@@ -124,7 +124,7 @@ def collect_rollout(
     agent: PPOAgent,
     kl_controller: Union[FixedKLController, AdaptiveKLController],
     generation_config: GenerationConfig,
-    algo_cfg: PPOConfig,
+    task_cfg: PPOConfig,
     tokenizer: PreTrainedTokenizer,
     fabric: lightning.Fabric,
     metrics: PPOMetricManager,
@@ -136,7 +136,7 @@ def collect_rollout(
         agent: The PPO agent.
         kl_controller: The KL controller.
         generation_config: The generation configuration.
-        algo_cfg: The PPO configuration.
+        task_cfg: The PPO configuration.
         tokenizer: The tokenizer.
         fabric: The fabric.
         metrics: The metric manager.
@@ -154,7 +154,7 @@ def collect_rollout(
     mini_batch_dataloader = DataLoader(
         batch_tdict,
         shuffle=False,
-        batch_size=algo_cfg.rollout_mini_batch_size,
+        batch_size=task_cfg.rollout_mini_batch_size,
         collate_fn=lambda x: x,
         num_workers=0,
         drop_last=False,
@@ -215,10 +215,10 @@ def collect_rollout(
     kl_div = rollout["actor_log_probs"] - rollout["ref_log_probs"]
 
     mean_kl_div = masked_mean(kl_div, action_mask).mean()
-    if algo_cfg.clip_rewards:
-        torch.clip_(reward_scores, -algo_cfg.reward_clip_value, algo_cfg.reward_clip_value)
+    if task_cfg.clip_rewards:
+        torch.clip_(reward_scores, -task_cfg.reward_clip_value, task_cfg.reward_clip_value)
 
-    if algo_cfg.normalize_rewards:
+    if task_cfg.normalize_rewards:
         # we normalize the reward but do not shift the mean
         # TODO: Does it really important to normalize the rewards?
         reward_scores = normalize(reward_scores, shift_mean=False)
@@ -234,8 +234,8 @@ def collect_rollout(
     advantages, returns = compute_advantages_and_returns(
         rewards=rewards * action_mask,
         values=values * action_mask,
-        gamma=algo_cfg.gae_gamma,
-        lambd=algo_cfg.gae_lambd,
+        gamma=task_cfg.gae_gamma,
+        lambd=task_cfg.gae_lambd,
     )
     rollout["advantages"] = advantages
     rollout["returns"] = returns

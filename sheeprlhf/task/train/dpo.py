@@ -226,7 +226,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
             agent.reference.eval()
             val_loss, val_acc = evaluate(
                 agent=agent,
-                algo_cfg=task_cfg,
+                task_cfg=task_cfg,
                 data_cfg=data_cfg,
                 val_dataloader=val_dataloader,
             )

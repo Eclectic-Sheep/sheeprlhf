@@ -213,7 +213,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
             model.eval()
             val_loss = evaluate(
                 model=model,
-                algo_cfg=task_cfg,
+                task_cfg=task_cfg,
                 data_cfg=data_cfg,
                 val_dataloader=val_dataloader,
             )
