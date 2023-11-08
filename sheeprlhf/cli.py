@@ -6,6 +6,7 @@ import sys
 from typing import Any, Dict, Optional, Tuple
 
 import hydra
+import torch
 from dotenv import load_dotenv
 from lightning import Fabric
 from omegaconf import DictConfig, OmegaConf
@@ -69,6 +70,7 @@ def execute(task_name: str, entrypoint: str, module: str, cfg: Dict[str, Any]):
 
 def run():
     """Run everything with hydra."""
+    torch.set_float32_matmul_precision("high")
     task_type = validate_args(sys.argv)
     register_structured_configs()
     load_dotenv()
