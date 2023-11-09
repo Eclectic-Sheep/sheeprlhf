@@ -57,8 +57,7 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
     model_cfg = ModelConfig(**cfg.model)
     data_cfg = DataConfig(**cfg.data)
     gen_cfg = GenConfig(**cfg.generation)
-    actor_optim_cfg = cfg.actor_optimizer
-    critic_optim_cfg = cfg.critic_optimizer
+    optim_cfg = cfg.optim
 
     fabric.seed_everything(cfg.seed + fabric.global_rank)
 
@@ -96,10 +95,13 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
         agent = PPOAgent(model_cfg=model_cfg, task_cfg=task_cfg)
         agent.load_checkpoint(fabric=fabric)
         agent.setup_finetuning()
+
     agent.actor = fabric.setup_module(agent.actor)
     agent.critic = fabric.setup_module(agent.critic)
-    agent.reward = fabric.setup_module(agent.reward)
-    agent.reference = fabric.setup_module(agent.reference)
+    if not agent.share_critic_reward:
+        agent.reward = fabric.setup_module(agent.reward)
+    if not agent.share_actor_critic and not agent.lora_enabled:
+        agent.reference = fabric.setup_module(agent.reference)
 
     # Setup Generation Configs
     generation_config = prepare_generation_config(
@@ -119,19 +121,17 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
 
     # Setup Optimizer Scheduler fabric models
 
-    actor_trainable_params, _, _ = prepare_optimizer_parameters(agent.actor, weight_decay=actor_optim_cfg.weight_decay)
+    actor_trainable_params, _, _ = prepare_optimizer_parameters(agent.actor, weight_decay=optim_cfg.weight_decay)
     actor_optimizer = instantiate_from_config(
-        actor_optim_cfg,
+        optim_cfg,
         params=actor_trainable_params,
         _convert_="partial",
     )
     actor_optimizer = fabric.setup_optimizers(actor_optimizer)
 
-    critic_trainable_params, _, _ = prepare_optimizer_parameters(
-        agent.critic, weight_decay=critic_optim_cfg.weight_decay
-    )
+    critic_trainable_params, _, _ = prepare_optimizer_parameters(agent.critic, weight_decay=optim_cfg.weight_decay)
     critic_optimizer = instantiate_from_config(
-        critic_optim_cfg,
+        optim_cfg,
         params=critic_trainable_params,
         _convert_="partial",
     )
@@ -158,12 +158,11 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
     else:
         kl_controller = FixedKLController(kl_coeff=task_cfg.init_kl_coeff)
 
-    iterator = tqdm(range(num_training_steps), disable=not fabric.is_global_zero)
-    data_iterator = iter(train_dataloader)
     fabric.print("Model Checkpoint interval: ", task_cfg.save_interval, "steps")
     fabric.print("Model Evaluation interval: ", task_cfg.eval_interval, "steps")
+    iterator = tqdm(range(num_training_steps), disable=not fabric.is_global_zero)
+    data_iterator = iter(train_dataloader)
     agent.reward.eval()
-
     for k in iterator:
         # Setup counters and data
         if k % len(train_dataloader) == 0 or data_iterator is None:

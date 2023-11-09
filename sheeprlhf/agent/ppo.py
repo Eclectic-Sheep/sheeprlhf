@@ -61,15 +61,19 @@ class PPOAgent:
                 self._share_actor_critic = True
 
         else:
-            # here we have critic model initialized with reward model so we need separete actor model
-            self._actor = ActorModel(model_cfg=self._sft_model_cfg)
             if not self._lora_enabled:
+                self._actor = ActorModel(model_cfg=self._sft_model_cfg)
                 self._critic = CriticModel(model_cfg=self._rm_model_cfg)
+            else:
+                self._share_critic_reward = True
 
     def load_checkpoint(self, fabric: Fabric) -> None:
         """Load checkpoints for Actor, Critic and Reward models."""
         self._reference.load_checkpoint(
             path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
+        )
+        self._reward.load_checkpoint(
+            path=self._rm_checkpoint_path, fabric=fabric, model_cfg=self._rm_model_cfg, freeze=True
         )
         if not self._init_critic_with_reward:
             if not (self._lora_enabled and self._same_actor_critic):
@@ -81,13 +85,12 @@ class PPOAgent:
                     path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
                 )
         else:
-            # here we have critic model initialized with reward model so we need separete actor model
-            self._actor.load_checkpoint(
-                path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
-            )
             if not self._lora_enabled:
                 self._critic.load_checkpoint(
                     path=self._rm_checkpoint_path, fabric=fabric, model_cfg=self._rm_model_cfg, freeze=True
+                )
+                self._actor.load_checkpoint(
+                    path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
                 )
 
     def setup_finetuning(self, model_cfg: Optional[ModelConfig] = None) -> None:
@@ -104,26 +107,44 @@ class PPOAgent:
                 self._actor.setup_finetuning(model_cfg=model_cfg)
                 self._critic.setup_finetuning(model_cfg=model_cfg)
         else:
-            # here we have critic model initialized with reward model so we need separete actor model
-            self._actor.setup_finetuning(model_cfg=model_cfg)
             if self._lora_enabled:
                 add_lora(self._reward, lora_cfg=lora_cfg)
+                add_lora(self._reference, lora_cfg=lora_cfg)
             else:
                 self._critic.setup_finetuning(model_cfg=model_cfg)
+                self._actor.setup_finetuning(model_cfg=model_cfg)
         trainable_parameter_summary(self.actor, show_names=False, tag="Actor")
         trainable_parameter_summary(self.critic, show_names=False, tag="Critic")
+
+    @property
+    def share_actor_critic(self) -> bool:
+        """Whether Actor and Critic models are shared."""
+        return self._share_actor_critic
+
+    @property
+    def share_critic_reward(self) -> bool:
+        """Whether Critic and Reward models are shared."""
+        return self._share_critic_reward
+
+    @property
+    def lora_enabled(self) -> bool:
+        """Whether LoRA is enabled."""
+        return self._lora_enabled
 
     @property
     def actor(self) -> ActorModel:  # noqa: D102
         if self._share_actor_critic:
             enable_lora(self._reference)
             return select_lora(self._reference, index=0)
+        elif self._lora_enabled and self._init_critic_with_reward:
+            enable_lora(self._reference)
+            return self._reference
         else:
             return self._actor
 
     @actor.setter
     def actor(self, actor: ActorModel) -> None:
-        if self._share_actor_critic:
+        if self._lora_enabled and (self._share_actor_critic or self._init_critic_with_reward):
             self._reference = actor
         else:
             self._actor = actor
@@ -151,7 +172,7 @@ class PPOAgent:
 
     @property
     def reference(self) -> ActorModel:  # noqa: D102
-        if self._share_actor_critic:
+        if self._share_actor_critic and self._lora_enabled:
             disable_lora(self._reference)
 
         return self._reference
