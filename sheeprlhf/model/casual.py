@@ -34,16 +34,12 @@ class CasualModel(FinetuneModel):
     ):
         """Loads a checkpoint from given path."""
         sd = torch.load(path, map_location=fabric.device)
-        new_sd = {}
-        for k, v in sd.items():
-            new_k = k.replace("model.", "")
-            new_sd[new_k] = v
         if model_cfg.finetune_mode == FINETUNE_MODE.LORA:
             add_lora(self.model, lora_cfg=model_cfg.lora_cfg)
-            self.model.load_state_dict(new_sd, strict=False)
+            self.model.load_state_dict(sd, strict=False)
             merge_lora(self.model)
         elif model_cfg.finetune_mode == FINETUNE_MODE.ALL:
-            self.model.load_state_dict(new_sd)
+            self.model.load_state_dict(sd)
         else:
             raise ValueError(f"Unknown finetune mode {model_cfg.finetune_mode}")
         if freeze:
@@ -59,5 +55,9 @@ class CasualModel(FinetuneModel):
         """
         output_file = os.path.join(experiment_dir, "model", f"checkpoint-{step}.pt")
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        sd = get_lora_state_dict(self) if model_cfg.finetune_mode == FINETUNE_MODE.LORA else self.state_dict()
+        sd = (
+            get_lora_state_dict(self.model)
+            if model_cfg.finetune_mode == FINETUNE_MODE.LORA
+            else self.model.state_dict()
+        )
         fabric.save(output_file, sd)

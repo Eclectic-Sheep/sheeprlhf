@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Union
+from typing import Dict, Union
 
 import lightning
 import torch
@@ -6,10 +6,9 @@ from tensordict import make_tensordict
 from torch.utils.data import DataLoader
 from transformers import GenerationConfig, PreTrainedTokenizer
 
-if TYPE_CHECKING:
-    from sheeprlhf.agent import PPOAgent
-    from sheeprlhf.structure.task import PPOConfig
-    from sheeprlhf.utils.metric import PPOMetricManager
+from sheeprlhf.agent import PPOAgent
+from sheeprlhf.structure.task import PPOConfig
+from sheeprlhf.utils.metric import PPOMetricManager
 
 
 class FixedKLController:
@@ -118,7 +117,7 @@ def masked_normalize(  # noqa: D103
     return normalized
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def collect_rollout(
     batch: Dict[str, torch.Tensor],
     agent: PPOAgent,
@@ -132,21 +131,18 @@ def collect_rollout(
     """Collects rollout data for PPO algorithm.
 
     Args:
-        batch: The batch of data.
+        batch: The rollout batch data
         agent: The PPO agent.
-        kl_controller: The KL controller.
+        kl_controller: The KL controller for penalty.
         generation_config: The generation configuration.
-        task_cfg: The PPO configuration.
-        tokenizer: The tokenizer.
-        fabric: The fabric.
-        metrics: The metric manager.
+        task_cfg: The PPO configuration used for training
+        tokenizer: The model tokenizer.
+        fabric: The fabric object.
+        metrics: The metric manager for training.
 
     Returns:
         The rollout data.
     """
-    agent.actor.eval()
-    agent.critic.eval()
-
     # We have the batch as dictionary let's create tensordict
     # so we can create dataloader with Fabric that transfers the data
     # to correct devices.
@@ -246,6 +242,4 @@ def collect_rollout(
     metrics.debug_advantages(advantages)
     metrics.debug_returns(returns)
 
-    agent.actor.train()
-    agent.critic.train()
     return rollout, sample_from_rollout

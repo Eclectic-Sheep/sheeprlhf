@@ -48,7 +48,7 @@ class DataConfig:
     validation_split: float = 0.1
     reward_model_split: float = 0.5
     split_names: Tuple[str] = ("train", "test")
-    debug: bool = II("debug")
+    dry_run: bool = II("dry_run")
 
 
 @dataclass

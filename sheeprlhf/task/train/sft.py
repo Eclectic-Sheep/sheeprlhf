@@ -17,8 +17,13 @@ from sheeprlhf.structure.generation import GenConfig
 from sheeprlhf.structure.model import ModelConfig
 from sheeprlhf.structure.task import SFTConfig
 from sheeprlhf.utils.data import prepare_generation_config, validate_dataset
+from sheeprlhf.utils.helper import (
+    create_tensorboard_logger,
+    get_log_dir,
+    log_text,
+    trainable_parameter_summary,
+)
 from sheeprlhf.utils.hydra import instantiate_from_config
-from sheeprlhf.utils.logger import create_tensorboard_logger, get_log_dir, log_text, trainable_parameter_summary
 from sheeprlhf.utils.metric import SFTMetricManager
 from sheeprlhf.utils.model import compute_grad_norm, prepare_optimizer_parameters
 from sheeprlhf.utils.registry import register_task
@@ -141,7 +146,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
         params=trainable_params,
         _convert_="partial",
     )
-    num_training_steps = task_cfg.epochs * len(train_dataloader)
+    num_training_steps = 2 if cfg.dry_run else task_cfg.epochs * len(train_dataloader)
     lr_scheduler = CosineSchedulerWithWarmup(
         lr=optim_cfg.lr,
         warmup_steps=task_cfg.lr_warmup_steps,
@@ -159,6 +164,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
     log_text(fabric, gen_text, "info/example_sample", step=0)
     fabric.print("Model Checkpoint interval: ", task_cfg.save_interval, "steps")
     fabric.print("Model Evaluation interval: ", task_cfg.eval_interval, "steps")
+
     iterator = tqdm(range(num_training_steps), disable=not fabric.is_global_zero)
 
     data_iterator = iter(train_dataloader)

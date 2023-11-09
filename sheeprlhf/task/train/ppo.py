@@ -19,8 +19,8 @@ from sheeprlhf.structure.generation import GenConfig
 from sheeprlhf.structure.model import ModelConfig
 from sheeprlhf.structure.task import PPOConfig
 from sheeprlhf.utils.data import prepare_generation_config, validate_dataset
+from sheeprlhf.utils.helper import create_tensorboard_logger, get_log_dir, log_text
 from sheeprlhf.utils.hydra import instantiate_from_config
-from sheeprlhf.utils.logger import create_tensorboard_logger, get_log_dir, log_text
 from sheeprlhf.utils.metric import PPOMetricManager
 from sheeprlhf.utils.model import compute_grad_norm, prepare_optimizer_parameters
 from sheeprlhf.utils.ppo import AdaptiveKLController, FixedKLController, collect_rollout, masked_normalize
@@ -93,7 +93,7 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
 
     # Setup Model
     with fabric.init_module(empty_init=model_cfg.fabric_empty_init):
-        agent = PPOAgent(fabric=fabric, model_cfg=model_cfg, task_cfg=task_cfg)
+        agent = PPOAgent(model_cfg=model_cfg, task_cfg=task_cfg)
         agent.load_checkpoint(fabric=fabric)
         agent.setup_finetuning()
     agent.actor = fabric.setup_module(agent.actor)
@@ -148,7 +148,7 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
         log_text(fabric, gen_text, "info/example_sample", step=0)
         fabric.log("info/example_last_reward", score, step=0)
 
-    num_training_steps = task_cfg.epochs * len(train_dataloader)
+    num_training_steps = 2 if cfg.dry_run else task_cfg.epochs * len(train_dataloader)
 
     # KL Controller
     if task_cfg.adaptive_kl_coeff:
@@ -165,8 +165,6 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
     agent.reward.eval()
 
     for k in iterator:
-        agent.actor.train()
-        agent.critic.train()
         # Setup counters and data
         if k % len(train_dataloader) == 0 or data_iterator is None:
             data_iterator = iter(train_dataloader)
@@ -176,6 +174,8 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
         # Setup batch data
         batch = next(data_iterator)
         max_prompt_length = batch["prompt_input_ids"].shape[1]
+        agent.actor.eval()
+        agent.critic.eval()
         t0 = time.time()
 
         rollout, sample_output = collect_rollout(
@@ -193,7 +193,8 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
             rollout, batch_size=task_cfg.micro_batch_size, shuffle=True, collate_fn=lambda x: x
         )
         rollout_dataloader = fabric.setup_dataloaders(rollout_dataloader, use_distributed_sampler=False)
-
+        agent.actor.train()
+        agent.critic.train()
         for _ in range(task_cfg.ppo_epochs):
             accumulator_counter = 0
             for micro_batch in rollout_dataloader:

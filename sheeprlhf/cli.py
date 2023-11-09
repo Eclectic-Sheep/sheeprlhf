@@ -12,8 +12,8 @@ from lightning import Fabric
 from omegaconf import DictConfig, OmegaConf
 
 from sheeprlhf.structure.task import TASK_TYPE
+from sheeprlhf.utils.helper import print_config
 from sheeprlhf.utils.hydra import instantiate_from_config
-from sheeprlhf.utils.logger import print_config
 from sheeprlhf.utils.registry import register_structured_configs, task_registry
 from sheeprlhf.utils.structure import dotdict
 
@@ -79,6 +79,13 @@ def run():
     def _run(cfg: DictConfig):
         """SheepRLHF zero-code command line utility."""
         task_name, entrypoint, module = validate_task(cfg)
+        if cfg.dry_run:
+            # set parameters for dry run w
+            cfg.task.eval_interval = 1
+            cfg.task.log_interval = 1
+            cfg.task.save_interval = 1
+            cfg.task.mini_batch_size = 1
+            cfg.task.micro_batch_size = 1
         print_config(cfg)
         cfg = dotdict(OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True))
         execute(task_name=task_name, entrypoint=entrypoint, module=module, cfg=cfg)

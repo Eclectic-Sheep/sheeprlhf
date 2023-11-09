@@ -43,6 +43,8 @@ class TrainTaskConfig:
         gradient_accumulation_steps: Number of gradient accumulation steps. It will be calculated automatically.
         use_masked_targets: Whether to use only responses for training or use both prompts and responses.
         lr_warmup_steps: Number of warmup steps for learning rate scheduler. Default scheduler has linear warmup.
+        max_num_steps: Maximum number of steps to train. If None, it will be calculated automatically
+            based on number of epochs and dataset size.
     """
 
     config_name: str = MISSING
@@ -58,6 +60,7 @@ class TrainTaskConfig:
     gradient_accumulation_steps: int = 1
     use_masked_targets: bool = False
     lr_warmup_steps: int = 200
+    max_num_steps: Optional[int] = None
 
     def __post_init__(self):
         self.gradient_accumulation_steps = self.mini_batch_size // self.micro_batch_size
@@ -157,7 +160,7 @@ class PPOConfig(TrainTaskConfig):
             If not provided, latest checkpoint will be loaded.
         actor_learning_rate: Learning rate for actor optimizer
         critic_learning_rate: Learning rate for critic optimizer
-        init_critic_with_rm: Whether to initialize critic with reward model checkpoint or not.
+        init_critic_with_reward: Whether to initialize critic with reward model checkpoint or not.
     """
 
     config_name: str = "ppo"
@@ -181,4 +184,4 @@ class PPOConfig(TrainTaskConfig):
     rm_model_name: Optional[str] = None
     actor_learning_rate: float = 1e-6
     critic_learning_rate: float = 1e-6
-    init_critic_with_rm: bool = True
+    init_critic_with_reward: bool = True

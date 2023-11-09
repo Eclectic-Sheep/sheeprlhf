@@ -68,7 +68,7 @@ class DataProcessor:
         shuffle: bool = True,
         seed: int = 42,
         split_names: Tuple[str] = ("train", "test"),
-        debug: bool = False,
+        dry_run: bool = False,
     ):
         self.dataset_name = dataset_name
         self.root_dir = root_dir
@@ -87,7 +87,7 @@ class DataProcessor:
         self.seed = seed
         self.split_names = split_names
         self.num_threads = num_threads
-        self.debug = debug
+        self.dry_run = dry_run
 
     @property
     def tokenizer(self) -> "PreTrainedTokenizer":
@@ -201,7 +201,7 @@ class DataProcessor:
             dataframe = dataframe.assign(chosen_input_ids=lambda x: x["encoded_prompt"] + x["encoded_chosen"])
             dataframe = dataframe.assign(rejected_input_ids=lambda x: x["encoded_prompt"] + x["encoded_rejected"])
 
-            if not self.debug:
+            if not self.dry_run:
                 dataframe = dataframe.drop(
                     columns=[
                         "prompt",

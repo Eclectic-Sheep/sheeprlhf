@@ -80,7 +80,6 @@ class CriticModel(FinetuneModel):
         sd = {k: v for k, v in sd.items() if "head" in k}
         return sd
 
-    @classmethod
     def load_checkpoint(
         self,
         path: str,
@@ -92,17 +91,18 @@ class CriticModel(FinetuneModel):
         sd = torch.load(path, map_location=fabric.device)
         new_sd = {}
         for k, v in sd.items():
-            new_k = k.replace("model.model", "transformer")
-            new_k = new_k.replace("model.", "")
+            # if it is loaded from Casual model we need to
+            # replace names for weights
+            new_k = k.replace("model.", "transformer.")
             new_sd[new_k] = v
         if model_cfg.finetune_mode == FINETUNE_MODE.LORA:
-            add_lora(self.model, lora_cfg=model_cfg.lora_cfg)
-            self.model.load_state_dict(new_sd, strict=False)
-            merge_lora(self.model)
+            add_lora(self.transformer, lora_cfg=model_cfg.lora_cfg)
+            self.load_state_dict(new_sd, strict=False)
+            merge_lora(self.transformer)
         else:
-            self.model.load_state_dict(new_sd)
+            self.load_state_dict(state_dict=new_sd, strict=False)
         if freeze:
-            for param in self.model.parameters():
+            for param in self.parameters():
                 param.requires_grad = False
 
     @rank_zero_only

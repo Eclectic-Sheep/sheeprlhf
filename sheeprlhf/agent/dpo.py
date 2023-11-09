@@ -5,7 +5,7 @@ from lightning import Fabric
 from sheeprlhf.model.actor import ActorModel
 from sheeprlhf.structure.model import FINETUNE_MODE, ModelConfig
 from sheeprlhf.structure.task import DPOConfig
-from sheeprlhf.utils.logger import trainable_parameter_summary
+from sheeprlhf.utils.helper import trainable_parameter_summary
 from sheeprlhf.utils.lora import add_lora, disable_lora, enable_lora
 from sheeprlhf.utils.model import get_model_checkpoint
 
@@ -50,16 +50,13 @@ class DPOAgent:
 
     def setup_finetuning(self, model_cfg: Optional[ModelConfig] = None) -> None:
         """Finetuning setup for both actor and reference model."""
-        if model_cfg is not None:
+        if model_cfg is None:
             model_cfg = self.model_cfg
-        self.fabric.print("Loading actor model")
-        if self.lora_enabled:
-            self.fabric.print("Adding LORA parameters to reference model")
-            add_lora(self._reference, lora_cfg=self.model_cfg.lora_cfg)
-            trainable_parameter_summary(self._reference, show_names=False, fabric=self.fabric)
+        if self._lora_enabled:
+            add_lora(self._reference, lora_cfg=model_cfg.lora_cfg)
         else:
             self._actor.setup_finetuning(model_cfg)
-            trainable_parameter_summary(model=self._actor, show_names=False, fabric=self.fabric)
+        trainable_parameter_summary(self.actor, show_names=False, tag="Actor")
 
     @property
     def actor(self) -> ActorModel:  # noqa: D102
@@ -69,8 +66,19 @@ class DPOAgent:
         else:
             return self._actor
 
+    @actor.setter
+    def actor(self, actor: ActorModel) -> None:
+        if self._finetune_mode == FINETUNE_MODE.LORA:
+            self._reference = actor
+        else:
+            self._actor = actor
+
     @property
     def reference(self) -> ActorModel:  # noqa: D102
         if self._finetune_mode == FINETUNE_MODE.LORA:
             disable_lora(self._reference)
         return self._reference
+
+    @reference.setter
+    def reference(self, reference: ActorModel) -> None:
+        self._reference = reference

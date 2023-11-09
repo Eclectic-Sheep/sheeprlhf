@@ -24,7 +24,7 @@ class TrainRunConfig:  # noqa: D101
     optim: OptimizerConfig = AdamWConfig()
     generation: GenConfig = GenConfig()
     experiment: Any = None
-    debug: bool = False
+    dry_run: bool = False
     seed: int = 42
     torch_deterministic: bool = False
     run_name: str = SI("seed_${seed}")
