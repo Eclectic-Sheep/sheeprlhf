@@ -1,11 +1,7 @@
-import typing
-
 import torch.nn.functional as F
 
 from sheeprlhf.model.casual import CasualModel
-
-if typing.TYPE_CHECKING:
-    from sheeprlhf.structure.model import ModelConfig
+from sheeprlhf.structure.model import ModelConfig
 
 
 class ActorModel(CasualModel):

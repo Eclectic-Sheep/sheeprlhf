@@ -1,3 +1,4 @@
+from sheeprlhf.task.train import dpo as dpo
 from sheeprlhf.task.train import rm as rm
 from sheeprlhf.task.train import sft as sft
 

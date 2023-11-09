@@ -55,6 +55,7 @@ class TrainTaskConfig:
     mini_batch_size: int = 8
     micro_batch_size: int = 8
     gradient_clip_val: float = 1.0
+    gradient_accumulation_steps: int = 1
     use_masked_targets: bool = False
     lr_warmup_steps: int = 200
 

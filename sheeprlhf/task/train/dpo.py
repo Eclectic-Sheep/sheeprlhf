@@ -130,7 +130,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
 
     # Setup Model
     with fabric.init_module(empty_init=model_cfg.fabric_empty_init):
-        agent = DPOAgent(fabric=fabric, model_cfg=model_cfg, task_cfg=task_cfg)
+        agent = DPOAgent(model_cfg=model_cfg, task_cfg=task_cfg)
         agent.load_checkpoint(fabric=fabric)
         agent.setup_finetuning()
     agent.actor = fabric.setup_module(agent.actor)

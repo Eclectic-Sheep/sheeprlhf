@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import Dict, Tuple
 
 import torch
 import torch.nn.functional as F
 
-if TYPE_CHECKING:
-    from sheeprlhf.agent import DPOAgent
+from sheeprlhf.agent.dpo import DPOAgent
 
 
 def compute_masked_logprobs(
