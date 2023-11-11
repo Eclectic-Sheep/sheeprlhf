@@ -1,6 +1,6 @@
 from typing import Optional
 
-from lightning import Fabric
+import torch
 
 from sheeprlhf.model.actor import ActorModel
 from sheeprlhf.model.critic import CriticModel
@@ -67,30 +67,30 @@ class PPOAgent:
             else:
                 self._share_critic_reward = True
 
-    def load_checkpoint(self, fabric: Fabric) -> None:
+    def load_checkpoint(self, device: torch.device) -> None:
         """Load checkpoints for Actor, Critic and Reward models."""
         self._reference.load_checkpoint(
-            path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
+            path=self._sft_checkpoint_path, device=device, model_cfg=self._sft_model_cfg, freeze=True
         )
         self._reward.load_checkpoint(
-            path=self._rm_checkpoint_path, fabric=fabric, model_cfg=self._rm_model_cfg, freeze=True
+            path=self._rm_checkpoint_path, device=device, model_cfg=self._rm_model_cfg, freeze=True
         )
         if not self._init_critic_with_reward:
             if not (self._lora_enabled and self._same_actor_critic):
                 # Actor and critic cannot be shared, we fallback to the default behavior
                 self._actor.load_checkpoint(
-                    path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
+                    path=self._sft_checkpoint_path, device=device, model_cfg=self._sft_model_cfg, freeze=True
                 )
                 self._critic.load_checkpoint(
-                    path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
+                    path=self._sft_checkpoint_path, device=device, model_cfg=self._sft_model_cfg, freeze=True
                 )
         else:
             if not self._lora_enabled:
                 self._critic.load_checkpoint(
-                    path=self._rm_checkpoint_path, fabric=fabric, model_cfg=self._rm_model_cfg, freeze=True
+                    path=self._rm_checkpoint_path, device=device, model_cfg=self._rm_model_cfg, freeze=True
                 )
                 self._actor.load_checkpoint(
-                    path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
+                    path=self._sft_checkpoint_path, device=device, model_cfg=self._sft_model_cfg, freeze=True
                 )
 
     def setup_finetuning(self, model_cfg: Optional[ModelConfig] = None) -> None:

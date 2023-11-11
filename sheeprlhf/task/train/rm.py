@@ -108,7 +108,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
     with fabric.init_module(empty_init=model_cfg.fabric_empty_init):
         model = RewardModel(model_cfg=ckpt_model_cfg)
         if checkpoint_path is not None:
-            model.load_checkpoint(model_cfg=ckpt_model_cfg, path=checkpoint_path, fabric=fabric)
+            model.load_checkpoint(model_cfg=ckpt_model_cfg, path=checkpoint_path, device=fabric.device)
         model.setup_finetuning(model_cfg=model_cfg)
 
     model = fabric.setup_module(model)

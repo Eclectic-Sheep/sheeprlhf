@@ -28,12 +28,12 @@ class CasualModel(FinetuneModel):
     def load_checkpoint(
         self,
         path: str,
-        fabric: lightning.Fabric,
+        device: torch.device,
         model_cfg: ModelConfig,
         freeze: bool = False,
     ):
         """Loads a checkpoint from given path."""
-        sd = torch.load(path, map_location=fabric.device)
+        sd = torch.load(path, map_location=device)
         if model_cfg.finetune_mode == FINETUNE_MODE.LORA:
             add_lora(self.model, lora_cfg=model_cfg.lora_cfg)
             self.model.load_state_dict(sd, strict=False)

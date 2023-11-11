@@ -83,12 +83,12 @@ class CriticModel(FinetuneModel):
     def load_checkpoint(
         self,
         path: str,
-        fabric: lightning.Fabric,
+        device: torch.device,
         model_cfg: ModelConfig,
         freeze: bool = False,
     ):
         """Load checkpoint for critic model."""
-        sd = torch.load(path, map_location=fabric.device)
+        sd = torch.load(path, map_location=device)
         new_sd = {}
         for k, v in sd.items():
             # if it is loaded from Casual model we need to

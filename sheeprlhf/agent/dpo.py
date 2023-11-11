@@ -1,6 +1,6 @@
 from typing import Optional
 
-from lightning import Fabric
+import torch
 
 from sheeprlhf.model.actor import ActorModel
 from sheeprlhf.structure.model import FINETUNE_MODE, ModelConfig
@@ -38,14 +38,14 @@ class DPOAgent:
         if not self._lora_enabled:
             self._actor = ActorModel(model_cfg=self._sft_model_cfg)
 
-    def load_checkpoint(self, fabric: Fabric) -> None:
+    def load_checkpoint(self, device: torch.device) -> None:
         """Load checkpoint for both actor and reference model."""
         self._reference.load_checkpoint(
-            path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=True
+            path=self._sft_checkpoint_path, device=device, model_cfg=self._sft_model_cfg, freeze=True
         )
         if not self._lora_enabled:
             self._actor.load_checkpoint(
-                path=self._sft_checkpoint_path, fabric=fabric, model_cfg=self._sft_model_cfg, freeze=False
+                path=self._sft_checkpoint_path, device=device, model_cfg=self._sft_model_cfg, freeze=False
             )
 
     def setup_finetuning(self, model_cfg: Optional[ModelConfig] = None) -> None:

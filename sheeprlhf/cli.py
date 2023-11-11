@@ -76,7 +76,7 @@ def run():
         warnings.warn("SheepRLHF is not tested on Windows and MacOS. Use at your own risk.", stacklevel=2)
     torch.set_float32_matmul_precision("high")
     task_type = validate_args(sys.argv)
-    if task_type == TASK_TYPE.EVALUATE and not _IS_EVALUATE_AVAILABLE:
+    if task_type == TASK_TYPE.EVAL and not _IS_EVALUATE_AVAILABLE:
         raise RuntimeError(
             "The evaluate task is not available. "
             "Please install the optional dependencies by running `pip install .[evaluate]`."

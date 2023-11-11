@@ -93,7 +93,7 @@ def main(fabric: Fabric, cfg: Dict):  # noqa: D103
     # Setup Model
     with fabric.init_module(empty_init=model_cfg.fabric_empty_init):
         agent = PPOAgent(model_cfg=model_cfg, task_cfg=task_cfg)
-        agent.load_checkpoint(fabric=fabric)
+        agent.load_checkpoint(device=fabric.device)
         agent.setup_finetuning()
 
     agent.actor = fabric.setup_module(agent.actor)

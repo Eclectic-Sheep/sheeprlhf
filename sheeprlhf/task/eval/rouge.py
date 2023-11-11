@@ -81,7 +81,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):  # noqa: D103
     ckpt_model_cfg, checkpoint_path = get_model_checkpoint(experiment_dir, task_cfg.model_name)
     with fabric.init_module(empty_init=ckpt_model_cfg.fabric_empty_init):
         model = CasualModel(model_cfg=ckpt_model_cfg)
-        model.load_checkpoint(checkpoint_path, fabric=fabric, model_cfg=ckpt_model_cfg, freeze=True)
+        model.load_checkpoint(checkpoint_path, device=fabric.device, model_cfg=ckpt_model_cfg, freeze=True)
     model = fabric.setup_module(model)
     model.eval()
 
