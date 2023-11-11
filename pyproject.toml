@@ -28,7 +28,7 @@ dependencies = [
   "tensordict==0.2.*",
   "tensorboard>=2.10",
   "python-dotenv==1.0.0",
-  "lightning==2.1.*",
+  "lightning@git+https://github.com/Lightning-AI/lightning@2b6b594dabe668752183f5ab8a1d93d0904c4d32",
   "hydra-core==1.3.2",
   "torchmetrics==1.2.0",
   "rich==13.5.*",
@@ -56,6 +56,10 @@ homepage = "https://eclecticsheep.ai"
 repository = "https://github.com/Eclectic-Sheep/sheeprlhf"
 
 [project.optional-dependencies]
+lit = [
+  "lit-gpt@git+https://github.com/Lightning-AI/lit-gpt@96666c3850741f7182f5c826e1528469d884829a",
+  "jsonargparse==4.27.0",
+]
 test = ["pytest==7.4.3", "pytest-timeout==2.2.0", "pytest-cov==4.1.0"]
 dev = [
   "pre-commit==3.5.0",
@@ -70,7 +74,6 @@ eval = [
   "rouge-score==0.1.2",
   "evaluate==0.4.0",
 ]
-
 [tool.ruff]
 # ruff already excludes many settings by default
 # exclude = [
@@ -121,7 +124,7 @@ convention = "google"
 # Adapted from https://realpython.com/pypi-publish-python-package/#version-your-package
 [tool.bumpver]
 current_version = "0.1.0"
-version_pattern = "MAJOR.MINOR.PATCH"
+version_pattern = "MAJOR.MINOR.PATCH[-PYTAGNUM]"
 commit_message = "build: Bump version {old_version} -> {new_version}"
 commit = true
 tag = false

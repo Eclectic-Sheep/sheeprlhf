@@ -3,6 +3,7 @@ https://github.com/Eclectic-Sheep/sheeprl/blob/4d6e28812de97d54e64ca57e44fb6cb3d
 """  # noqa: D205
 import importlib
 import sys
+import warnings
 from typing import Any, Dict, Optional, Tuple
 
 import hydra
@@ -12,6 +13,7 @@ from lightning import Fabric
 from omegaconf import DictConfig, OmegaConf
 
 from sheeprlhf.structure.task import TASK_TYPE
+from sheeprlhf.utils.cache import _IS_EVALUATE_AVAILABLE, _IS_MACOS, _IS_WINDOWS
 from sheeprlhf.utils.helper import print_config
 from sheeprlhf.utils.hydra import instantiate_from_config
 from sheeprlhf.utils.registry import register_structured_configs, task_registry
@@ -70,8 +72,15 @@ def execute(task_name: str, entrypoint: str, module: str, cfg: Dict[str, Any]):
 
 def run():
     """Run everything with hydra."""
+    if _IS_WINDOWS or _IS_MACOS:
+        warnings.warn("SheepRLHF is not tested on Windows and MacOS. Use at your own risk.", stacklevel=2)
     torch.set_float32_matmul_precision("high")
     task_type = validate_args(sys.argv)
+    if task_type == TASK_TYPE.EVALUATE and not _IS_EVALUATE_AVAILABLE:
+        raise RuntimeError(
+            "The evaluate task is not available. "
+            "Please install the optional dependencies by running `pip install .[evaluate]`."
+        )
     register_structured_configs()
     load_dotenv()
 
@@ -80,12 +89,14 @@ def run():
         """SheepRLHF zero-code command line utility."""
         task_name, entrypoint, module = validate_task(cfg)
         if cfg.dry_run:
-            # set parameters for dry run w
-            cfg.task.eval_interval = 1
-            cfg.task.log_interval = 1
-            cfg.task.save_interval = 1
             cfg.task.mini_batch_size = 1
-            cfg.task.micro_batch_size = 1
+            cfg.task.num_workers = 1
+            if task_type == TASK_TYPE.TRAIN:
+                cfg.task.micro_batch_size = 1
+                cfg.task.eval_interval = 1
+                cfg.task.log_interval = 1
+                cfg.task.save_interval = 1
+
         print_config(cfg)
         cfg = dotdict(OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True))
         execute(task_name=task_name, entrypoint=entrypoint, module=module, cfg=cfg)

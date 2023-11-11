@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+import psutil
 from omegaconf import II, MISSING
 
 
@@ -53,7 +54,7 @@ class TrainTaskConfig:
     eval_interval: int = 1000
     log_interval: int = 5
     eval_iters: int = 100
-    num_workers: int = 4
+    num_workers: Optional[int] = None
     mini_batch_size: int = 8
     micro_batch_size: int = 8
     gradient_clip_val: float = 1.0
@@ -64,6 +65,33 @@ class TrainTaskConfig:
 
     def __post_init__(self):
         self.gradient_accumulation_steps = self.mini_batch_size // self.micro_batch_size
+        if self.num_workers is None:
+            num_cores = psutil.cpu_count(logical=False)
+            self.num_workers = num_cores
+
+
+@dataclass
+class EvalTaskConfig:
+    """Configuration class evaluation tasks.
+
+    Attributes:
+        config_name: Name of the task.
+        experiment_dir: Path to the experiment directory.
+        model_name: Name of the model to load from experiment directory.
+            If not provided, latest checkpoint will be loaded.
+    """
+
+    config_name: str = MISSING
+    experiment_dir: str = MISSING
+    model_name: Optional[str] = None
+    data_split: str = "test"
+    num_workers: Optional[int] = None
+    mini_batch_size: int = 8
+
+    def __post_init__(self):
+        if self.num_workers is None:
+            num_cores = psutil.cpu_count(logical=False)
+            self.num_workers = num_cores
 
 
 @dataclass
@@ -185,3 +213,19 @@ class PPOConfig(TrainTaskConfig):
     actor_learning_rate: float = 1e-6
     critic_learning_rate: float = 1e-6
     init_critic_with_reward: bool = True
+
+
+@dataclass
+class PerplexityConfig(EvalTaskConfig):
+    """Configuration class for perplexity evaluation task."""
+
+    config_name: str = "perplexity"
+    use_masked_targets: bool = False
+    label_smoothing: float = 0.0
+
+
+@dataclass
+class RougeConfig(EvalTaskConfig):
+    """Configuration class for ROUGE evaluation task."""
+
+    config_name: str = "rouge"

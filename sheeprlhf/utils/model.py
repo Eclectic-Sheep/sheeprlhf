@@ -52,11 +52,12 @@ def get_model_checkpoint(experiment_dir: str, model_name: Optional[str] = None) 
     Returns:
         A tuple of ModelConfig and checkpoint path.
     """
-    model_dir = os.path.join(experiment_dir, "model")
-    exp_cfg = OmegaConf.load(Path(experiment_dir) / ".hydra/config.yaml")
+    exp_dir = Path(experiment_dir)
+    model_dir = exp_dir / "model"
+    exp_cfg = OmegaConf.load(exp_dir / ".hydra/config.yaml")
     model_cfg = ModelConfig(**exp_cfg.model)
     if model_name is None:
-        checkpoints = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith(".pt")]
+        checkpoints = [os.path.join(str(model_dir), f) for f in os.listdir(str(model_dir)) if f.endswith(".pt")]
         checkpoints = sorted(checkpoints, key=lambda x: int(x.split(".")[-2].split("-")[-1]))
         selected_checkpoint = checkpoints[-1]
     else:
