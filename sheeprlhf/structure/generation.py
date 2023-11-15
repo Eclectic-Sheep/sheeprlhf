@@ -7,7 +7,6 @@ class GenConfig:
 
     # We cannot call this GenerationConfig because it will
     # conflict with transformers.GenerationConfig
-    config_name: str = "default"
     max_new_tokens: int = 128
     num_beams: int = 1
     do_sample: bool = True
