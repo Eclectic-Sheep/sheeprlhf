@@ -25,7 +25,7 @@ def validate_args(args: Tuple[str, ...]):
 
     They should be in the form of: `python -m sheeprlhf <run_type> <other-configs>`.
     """
-    possible_args = list(TASK_TYPE.__dict__.values())
+    possible_args = [str(item).lower() for item in TASK_TYPE._member_names_]
     if len(args) < 2:
         raise Exception(f"Please specify a run type. Possible run arguments: {possible_args}")
 
@@ -79,7 +79,7 @@ def run():
     if task_type == TASK_TYPE.EVAL and not _IS_EVALUATE_AVAILABLE:
         raise RuntimeError(
             "The evaluate task is not available. "
-            "Please install the optional dependencies by running `pip install .[evaluate]`."
+            "Please install the optional dependencies by running `pip install .[eval]`."
         )
     register_structured_configs()
     load_dotenv()

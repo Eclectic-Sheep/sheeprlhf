@@ -6,8 +6,7 @@ import psutil
 from omegaconf import II, MISSING
 
 
-@dataclass
-class TASK_TYPE:
+class TASK_TYPE(Enum):
     """The type of task to run."""
 
     TRAIN: str = "train"
