@@ -28,15 +28,15 @@ eval_defaults = [
 class TrainRunConfig:  # noqa: D101
     config_name: str = "base_train"
     defaults: List[Any] = field(default_factory=lambda: train_defaults)
-    # Mandatory configs
+
     task: TrainTaskConfig = MISSING
     model: ModelConfig = MISSING
     data: DataConfig = MISSING
     fabric: FabricConfig = MISSING
     optim: OptimizerConfig = MISSING
-    generation: GenConfig = GenConfig()
 
     # Default configs
+    generation: GenConfig = GenConfig()
     experiment: Any = None
     dry_run: bool = False
     seed: int = 42
@@ -49,8 +49,12 @@ class TrainRunConfig:  # noqa: D101
 class EvalRunConfig:  # noqa: D101
     config_name: str = "base_eval"
     defaults: List[Any] = field(default_factory=lambda: eval_defaults)
+    # Mandatory configs
     task: EvalTaskConfig = MISSING
     fabric: FabricConfig = MISSING
+
+    # Default configs
     generation: GenConfig = GenConfig()
     dry_run: bool = False
     seed: int = 42
+    experiment: Any = None
