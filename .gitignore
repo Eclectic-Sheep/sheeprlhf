@@ -164,3 +164,4 @@ cython_debug/
 logs/
 rlhf_data/
 .vscode/
+sheeprlhf/utils/lit_gpt_scripts
