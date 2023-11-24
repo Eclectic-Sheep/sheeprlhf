@@ -77,6 +77,13 @@ The repository is structured as follows:
 - `loss`: Contains the implementation of the loss functions for available tasks.
 - `model`: Contains the implementation of wrapper model classes for LLMs.
 - `structure`: This folder has all configurations for the framework, including the default configurations. The user can add new settings to the framework by adding new configurations to this folder.
+  - `data.py`: Contains the configuration for each dataset available.
+  - `fabric.py`: Configurations for Lightning Fabric instance.
+  - `generation.py`: Contains parameters for generation configuration for text generation.
+  - `model.py`: Contains the configuration for each model available.
+  - `optim.py`: Optimization configuration.
+  - `run.py`: Entry point configurations for training and evaluation.
+  - `task.py`: Contains the configuration for each task available such as SFT, DPO, and PPO etc.
 - `task`: In this folder, we have implementations for each task that the framework supports.
     - `train`: Contains the implementation of the training algorithms such as SFT, DPO, and PPO.
     - `eval`: Contains the implementation of the evaluation algorithms such as perplexity and and ROUGE.
