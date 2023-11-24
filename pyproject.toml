@@ -66,7 +66,7 @@ dev = [
   "pre-commit==3.5.0",
   "mypy==1.6.1",
   "isort==5.12.0",
-  "ruff==0.1.4",
+  "ruff==0.1.6",
   "bumpver==2023.1124",
 ]
 eval = [

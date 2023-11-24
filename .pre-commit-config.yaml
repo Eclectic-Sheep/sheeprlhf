@@ -6,14 +6,14 @@ repos:
         name: (prettier) Reformat YAML files with prettier
         types: [yaml]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.4
+    rev: v0.1.6
     hooks:
       - id: ruff
         types_or: [python, pyi, jupyter]
         args: ["--config", "pyproject.toml", "--fix"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.4
+    rev: v0.1.6
     hooks:
       - id: ruff-format
         args: ["--config", "pyproject.toml"]

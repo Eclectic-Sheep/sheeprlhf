@@ -6,7 +6,7 @@ import psutil
 from omegaconf import II, MISSING
 
 
-class TASK_TYPE(Enum):
+class TASK_TYPE(str, Enum):
     """The type of task to run."""
 
     TRAIN: str = "train"
@@ -14,7 +14,7 @@ class TASK_TYPE(Enum):
 
 
 # Omegaconf does not support Literal String types
-class RM_LOSS_TYPE(Enum):
+class RM_LOSS_TYPE(str, Enum):
     """The type of loss function to use for reward modelling."""
 
     AVERAGE = "average"

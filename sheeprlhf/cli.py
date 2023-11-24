@@ -96,6 +96,7 @@ def run():
                 cfg.task.eval_interval = 1
                 cfg.task.log_interval = 1
                 cfg.task.save_interval = 1
+                cfg.task.eval_iters = 1
 
         print_config(cfg)
         cfg = dotdict(OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True))
