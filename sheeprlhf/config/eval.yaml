@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - base_eval@_global_
+  - _self_
+
+hydra:
+  run:
+    dir: /tmp/sheeprlhf/eval_runs/{now:%Y-%m-%d_%H-%M-%S}
+  job:
+    chdir: False
